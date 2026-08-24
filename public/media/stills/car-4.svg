@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14101f"/>
+      <stop offset="1" stop-color="#0a0712"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.6">
+      <stop offset="0" stop-color="#7c5cff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#7c5cff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+  <ellipse cx="800" cy="640" rx="520" ry="34" fill="#000" opacity="0.55"/>
+  <path d="M400 620 Q430 520 560 500 L760 485 Q900 480 1010 520 L1140 560 Q1190 580 1195 620 Z" fill="#1d1830" stroke="#3a2f5c" stroke-width="3"/>
+  <circle cx="560" cy="620" r="62" fill="#0c0a14" stroke="#4a3f70" stroke-width="6"/>
+  <circle cx="1070" cy="620" r="62" fill="#0c0a14" stroke="#4a3f70" stroke-width="6"/>
+  <text x="800" y="240" font-family="Georgia, serif" font-size="72" fill="#e9e2d3" text-anchor="middle" opacity="0.9">CAR 4</text>
+  <text x="800" y="300" font-family="Arial" font-size="26" letter-spacing="8" fill="#9b8fc4" text-anchor="middle">WRAPMODE — PLACEHOLDER STAGE 4/4</text>
+  <text x="800" y="760" font-family="Arial" font-size="22" letter-spacing="6" fill="#6b5f95" text-anchor="middle">REAL FOOTAGE PENDING</text>
+</svg>

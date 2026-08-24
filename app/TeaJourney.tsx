@@ -4,61 +4,44 @@ import { useEffect, useRef, useState } from "react";
 
 const scenes = [
   {
-    label: "Origin",
-    kicker: "01 · The leaf begins",
-    title: "Before it becomes tea.",
-    body: "High in the mountains, mist settles slowly on the youngest leaves. Flavour begins with water, stone and the quiet of morning.",
-    note: "Elevation · 1,400 m",
-    still: "/media/stills/01-valley.webp",
+    label: "Car 01",
+    kicker: "01 · The first reveal",
+    title: "Where the film begins.",
+    body: "The studio opens on the first car — a wrapped silhouette under low violet light. Scroll, and the camera starts to move.",
+    note: "Stage 01 · Studio floor",
+    still: "/media/stills/car-1.svg",
   },
   {
-    label: "Harvest",
-    kicker: "02 · The first touch",
-    title: "Gathered only at dawn.",
-    body: "Hands choose the tender tips — two leaves and a bud. Everything else is left to grow until the mist returns.",
-    note: "Hand-picked",
-    still: "/media/stills/02-harvest.webp",
+    label: "Car 02",
+    kicker: "02 · Continuous move",
+    title: "One motion, no cuts.",
+    body: "The camera glides past the first car and settles on the second. Same light, same world — a single unbroken move.",
+    note: "Stage 02 · Continuous shot",
+    still: "/media/stills/car-2.svg",
   },
   {
-    label: "Air",
-    kicker: "03 · The house of warm air",
-    title: "Time becomes fragrance.",
-    body: "Across woven bamboo trays, each leaf releases moisture, softens and reveals the first trace of its future character.",
-    note: "Slow withering",
-    still: "/media/stills/03-drying-house.webp",
+    label: "Car 03",
+    kicker: "03 · The camera turns",
+    title: "Around the third form.",
+    body: "The journey curves around the third car as its wrap catches the rim light — texture you can almost touch.",
+    note: "Stage 03 · Orbit pass",
+    still: "/media/stills/car-3.svg",
   },
   {
-    label: "Fire",
-    kicker: "04 · Fire and form",
-    title: "Fire remembers the hands.",
-    body: "Copper, charcoal and the steady movement of the maker stop oxidation, folding aroma into every leaf.",
-    note: "Hand-roasted",
-    still: "/media/stills/04-fire-and-form.webp",
-  },
-  {
-    label: "Passage",
-    kicker: "05 · Across the mountains",
-    title: "A quiet road to water.",
-    body: "Tea leaves the workshop by the same path that carries rain, cedar and mountain air into the valley.",
-    note: "Stone · forest · water",
-    still: "/media/stills/05-mountain-road.webp",
-  },
-  {
-    label: "Cup",
-    kicker: "06 · The quiet ceremony",
-    title: "The whole valley, in one cup.",
-    body: "The mountains return in the steam above dark water. The journey ends where it began: in mist and stillness.",
-    note: "Water · 82 °C",
-    still: "/media/stills/06-tea-ceremony.webp",
+    label: "Car 04",
+    kicker: "04 · The final frame",
+    title: "The collection, complete.",
+    body: "The camera lands on the last car and holds. Four cars, one continuous journey — the way Wrapmode sees every wrap.",
+    note: "Stage 04 · Hero hold",
+    still: "/media/stills/car-4.svg",
   },
 ];
 
+// Placeholder paths — real rendered transitions (car 1→2, 2→3, 3→4) replace these files later.
 const clips = [
-  "/media/video/01-valley-to-harvest.mp4",
-  "/media/video/02-harvest-to-drying-house.mp4",
-  "/media/video/03-drying-to-roasting.mp4",
-  "/media/video/04-roasting-to-road.mp4",
-  "/media/video/05-road-to-ceremony.mp4",
+  "/media/video/car-1-to-2.mp4",
+  "/media/video/car-2-to-3.mp4",
+  "/media/video/car-3-to-4.mp4",
 ];
 
 const clamp = (value: number, min = 0, max = 1) =>
@@ -99,18 +82,25 @@ export function TeaJourney() {
       setReady(true);
     }
 
+    // Timeline: hold(car1) · clip1 · hold(car2) · clip2 · hold(car3) · clip3 · hold(car4)
+    // Even units are holds on a car, odd units scrub the transition clip.
+    const unitCount = scenes.length + clips.length;
+
     const read = () => {
       const maxScroll =
         document.documentElement.scrollHeight - window.innerHeight;
       const progress = maxScroll > 0 ? clamp(window.scrollY / maxScroll) : 0;
-      const exact = progress * clips.length;
-      const segment = Math.min(clips.length - 1, Math.floor(exact));
-      const local =
-        segment === clips.length - 1 ? clamp(exact - segment) : exact - segment;
+      const exact = progress * unitCount;
+      const unit = Math.min(unitCount - 1, Math.floor(exact));
+      const local = unit === unitCount - 1 ? clamp(exact - unit) : exact - unit;
+      const isHold = unit % 2 === 0;
+      const holdScene = unit / 2;
+      const clipIndex = (unit - 1) / 2;
 
       targets.current = targets.current.map((_, index) => {
-        if (index < segment) return 1;
-        if (index === segment) return local;
+        if (isHold) return index < holdScene ? 1 : 0;
+        if (index < clipIndex) return 1;
+        if (index === clipIndex) return local;
         return 0;
       });
 
@@ -118,12 +108,18 @@ export function TeaJourney() {
       videoRefs.current.forEach((video, index) => {
         if (!video) return;
         let opacity = 0;
-        if (index === segment) opacity = 1 - fade;
-        if (index === segment + 1) opacity = fade;
+        if (isHold) {
+          if (index === holdScene - 1) opacity = 1;
+        } else {
+          if (index === clipIndex) opacity = 1 - fade;
+          if (index === clipIndex + 1) opacity = fade;
+        }
         video.style.opacity = String(opacity);
       });
 
-      const nextActive = Math.min(scenes.length - 1, Math.round(exact));
+      const nextActive = isHold
+        ? holdScene
+        : Math.min(scenes.length - 1, local < 0.5 ? clipIndex : clipIndex + 1);
       if (nextActive !== activeRef.current) {
         activeRef.current = nextActive;
         setActive(nextActive);
@@ -169,8 +165,9 @@ export function TeaJourney() {
   const jumpTo = (index: number) => {
     const maxScroll =
       document.documentElement.scrollHeight - window.innerHeight;
+    // Centre of the hold unit for scene `index` on the hold/clip timeline.
     window.scrollTo({
-      top: (index / (scenes.length - 1)) * maxScroll,
+      top: ((2 * index + 0.5) / (scenes.length + clips.length)) * maxScroll,
       behavior: "smooth",
     });
   };
