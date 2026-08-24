@@ -25,17 +25,27 @@ export function WrapCard({
       disabled={!compatible}
       aria-pressed={active}
       onClick={() => compatible && onSelect(wrap.id)}
-      className={`wrap-card group relative w-[210px] shrink-0 overflow-hidden rounded-2xl px-4 pb-4 pt-3.5 text-left transition-[transform,border-color,box-shadow] duration-300 lg:w-full ${
+      className={`wrap-card group relative w-[218px] shrink-0 overflow-hidden rounded-xl px-4 pb-4 pt-3.5 text-left transition-[transform,border-color,box-shadow] duration-300 lg:w-full ${
         active
-          ? "card-fine border-accent/60 shadow-glow-sm"
+          ? "card-fine border-accent/50"
           : compatible
             ? "card-fine hover:-translate-y-[3px] hover:border-line-2 hover:shadow-[0_18px_44px_rgba(0,0,0,0.42)]"
             : "card-fine cursor-not-allowed opacity-40 saturate-0"
       }`}
       style={{ transitionTimingFunction: "var(--ease-expo)" }}
     >
+      {/* ghost index — editorial numeral behind the artwork */}
+      <span
+        aria-hidden
+        className={`ed-numeral pointer-events-none absolute right-2 top-[26px] text-[64px] font-black leading-none transition-opacity duration-500 ${
+          active ? "opacity-80" : "opacity-30 group-hover:opacity-60"
+        }`}
+      >
+        {String(index + 1).padStart(2, "0")}
+      </span>
+
       {/* meta row — design index + tag */}
-      <span className="flex items-center justify-between">
+      <span className="relative flex items-center justify-between">
         <span
           className={`font-mono text-[10px] tracking-[0.3em] transition-colors duration-300 ${
             active ? "text-accent-2" : "text-fog"
@@ -62,12 +72,12 @@ export function WrapCard({
 
       {/* thumbnail — the artwork band */}
       <span
-        className={`mt-3 block h-[76px] overflow-hidden rounded-xl border transition-colors duration-300 ${
+        className={`relative mt-3 block h-[88px] overflow-hidden rounded-lg border transition-colors duration-300 ${
           active ? "border-accent/40" : "border-white/10"
         }`}
       >
         <svg
-          viewBox="0 0 210 76"
+          viewBox="0 0 218 88"
           preserveAspectRatio="xMidYMid slice"
           className="h-full w-full transition-transform duration-500 group-hover:scale-[1.05]"
           style={{ transitionTimingFunction: "var(--ease-expo)" }}
@@ -75,13 +85,20 @@ export function WrapCard({
         >
           <defs>
             <WrapPattern id={thumbId} spec={wrap.pattern} scale={2.4} />
+            {/* soft studio sheen over the swatch */}
+            <linearGradient id="thumbSheen" x1="0" y1="0" x2="0.4" y2="1">
+              <stop offset="0" stopColor="#ffffff" stopOpacity="0.1" />
+              <stop offset="0.5" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="1" stopColor="#000000" stopOpacity="0.16" />
+            </linearGradient>
           </defs>
-          <rect width="210" height="76" fill={`url(#${thumbId})`} />
+          <rect width="218" height="88" fill={`url(#${thumbId})`} />
+          <rect width="218" height="88" fill="url(#thumbSheen)" />
         </svg>
       </span>
 
       {/* name + price */}
-      <span className="mt-3 flex items-baseline justify-between gap-3">
+      <span className="relative mt-3.5 flex items-baseline justify-between gap-3">
         <span className="min-w-0">
           <span
             className={`block truncate text-[14.5px] font-semibold ${
@@ -93,7 +110,7 @@ export function WrapCard({
           <span className="mt-0.5 block truncate text-[11.5px] text-fog">{wrap.nameFa}</span>
         </span>
         <span
-          className={`shrink-0 text-[13px] font-semibold tabular-nums transition-colors duration-300 ${
+          className={`shrink-0 font-mono text-[12px] tabular-nums tracking-tight transition-colors duration-300 ${
             active ? "text-accent-2" : "text-mist"
           }`}
         >

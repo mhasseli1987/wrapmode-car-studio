@@ -120,7 +120,7 @@ export function VehicleViewer({ vehicle, wrap }: { vehicle: VehicleId; wrap: Wra
   return (
     <svg
       ref={rootRef}
-      viewBox="55 15 830 300"
+      viewBox="80 22 780 292"
       className="w-full select-none"
       role="img"
       aria-label={`پیش‌نمایش طرح ${wrap.nameFa} روی ${v.nameFa}`}
@@ -164,7 +164,7 @@ export function VehicleViewer({ vehicle, wrap }: { vehicle: VehicleId; wrap: Wra
           <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
         <radialGradient id="floorGlow" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0" stopColor="#7c5cfc" stopOpacity="0.14" />
+          <stop offset="0" stopColor="#7c5cfc" stopOpacity="0.2" />
           <stop offset="1" stopColor="#7c5cfc" stopOpacity="0" />
         </radialGradient>
 
@@ -180,9 +180,9 @@ export function VehicleViewer({ vehicle, wrap }: { vehicle: VehicleId; wrap: Wra
       </defs>
 
       {/* floor */}
-      <ellipse cx="470" cy="296" rx="365" ry="17" fill="url(#floorGlow)" />
-      <ellipse cx="470" cy="301" rx="335" ry="13" fill="rgba(0,0,0,0.62)" />
-      <line x1="60" y1="303" x2="880" y2="303" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+      <ellipse cx="470" cy="298" rx="340" ry="20" fill="url(#floorGlow)" />
+      <ellipse cx="470" cy="301" rx="330" ry="13" fill="rgba(0,0,0,0.62)" />
+      <line x1="82" y1="303" x2="858" y2="303" stroke="rgba(242,239,232,0.14)" strokeWidth="1" />
 
       <g ref={carsRef}>
         <g ref={sedanRef}>

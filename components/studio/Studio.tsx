@@ -26,7 +26,7 @@ function GhostWord({ vehicle }: { vehicle: VehicleId }) {
     <div
       ref={ref}
       aria-hidden
-      className="ghost-word pointer-events-none absolute inset-x-0 top-[15%] select-none text-center text-[20vw] font-black leading-none lg:top-[12%] lg:text-[13vw]"
+      className="ghost-word pointer-events-none absolute inset-x-0 top-[26%] select-none text-center text-[20vw] font-black leading-none lg:top-[24%] lg:text-[13vw]"
     >
       {getVehicle(vehicle).name.toUpperCase()}
     </div>
@@ -157,7 +157,7 @@ export function Studio() {
         <section
           id="stage"
           aria-label="استودیوی انتخاب کاور"
-          className="relative flex min-h-[calc(100vh-4rem)] flex-col overflow-hidden border-b border-line bg-stage lg:border-b-0 lg:border-r"
+          className="relative flex min-h-[calc(100vh-4rem)] min-w-0 flex-col overflow-hidden border-b border-line bg-stage lg:border-b-0 lg:border-r"
         >
           {/* layered atmosphere: light → nebula → vignette → grain */}
           <div aria-hidden className="studio-light pointer-events-none absolute inset-0" />
@@ -176,7 +176,7 @@ export function Studio() {
               <p className="text-[10px] font-semibold tracking-[0.44em] text-accent-2">
                 WRAPMODE — WRAP STUDIO
               </p>
-              <h1 className="text-[clamp(2.2rem,5.4vw,4rem)] font-bold leading-[1.0] tracking-tight">
+              <h1 className="text-[clamp(1.9rem,4.6vw,3.3rem)] font-bold leading-[1.02] tracking-tight">
                 CAR WRAP
                 <span className="block font-light text-mist">
                   STUDIO<span className="text-accent">.</span>
@@ -190,8 +190,10 @@ export function Studio() {
               </p>
             </div>
 
-            <div className="anim-stage-car grid min-h-[300px] flex-1 place-items-center py-2 lg:-mx-14 lg:min-h-[500px]">
-              <VehicleViewer vehicle={vehicle} wrap={wrap} />
+            <div className="anim-stage-car relative grid min-h-[320px] flex-1 place-items-center py-2 lg:min-h-[540px]">
+              <div className="relative z-[1] w-full -mx-6 sm:-mx-10 lg:-mx-20">
+                <VehicleViewer vehicle={vehicle} wrap={wrap} />
+              </div>
             </div>
 
             <div className="flex flex-wrap items-end justify-between gap-4 pb-6 lg:pb-8">
@@ -202,7 +204,7 @@ export function Studio() {
         </section>
 
         {/* ── The Collection ────────────────────────────────── */}
-        <aside className="bg-panel/30 px-4 py-7 sm:px-6 lg:sticky lg:top-16 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto lg:wrap-scroll">
+        <aside className="min-w-0 bg-panel/30 px-4 py-7 sm:px-6 lg:sticky lg:top-16 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto lg:wrap-scroll">
           <WrapSelector vehicleId={vehicle} selectedId={wrapId} onSelect={setWrapId} />
         </aside>
       </main>

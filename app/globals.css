@@ -45,12 +45,27 @@ body {
   letter-spacing: 0.1em;
 }
 
-/* cinematic studio light behind the vehicle — neutral, not colorful */
+/* cinematic studio light behind the vehicle — asymmetric key + rim */
 .studio-light {
   background:
-    radial-gradient(1200px 560px at 50% 8%, rgba(226, 232, 255, 0.09), transparent 62%),
-    radial-gradient(860px 380px at 50% 46%, rgba(226, 232, 255, 0.065), transparent 68%),
-    linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, 0.28) 100%);
+    radial-gradient(1100px 520px at 38% 0%, rgba(228, 234, 255, 0.1), transparent 60%),
+    radial-gradient(700px 360px at 62% 44%, rgba(226, 232, 255, 0.07), transparent 66%),
+    linear-gradient(100deg, transparent 30%, rgba(0, 0, 0, 0.22) 78%),
+    linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+/* studio floor — a hairline the vehicle parks on, with a soft center glow */
+.stage-floor {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(242, 239, 232, 0.1) 18%,
+    rgba(242, 239, 232, 0.22) 50%,
+    rgba(242, 239, 232, 0.1) 82%,
+    transparent
+  );
+  height: 1px;
+  box-shadow: 0 22px 90px 12px rgba(124, 92, 252, 0.07);
 }
 
 /* enzo-style vignette + film grain — extremely subtle */
