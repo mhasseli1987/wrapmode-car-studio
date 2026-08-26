@@ -136,16 +136,34 @@
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
     const pad = isMobile() ? 0.9 : 0.92;
+    const isCover = CARS[car].fit === "cover";
     // cover: فریم کل صفحه را می‌پوشاند (برش اضافی) — contain: کل فریم داخل صفحه
-    const scale = CARS[car].fit === "cover"
+    const scale = isCover
       ? Math.max(cw / iw, ch / ih)
       : Math.min(cw / iw, ch / ih) * pad;
     const dw = iw * scale, dh = ih * scale;
     const dx = (cw - dw) / 2 + sx * cw;
     const dy = (ch - dh) / 2 + sy * ch;
     if (alpha < 1) ctx.globalAlpha = alpha;
-    ctx.drawImage(img, dx, dy, dw, dh);
+    if (!isCover) {
+      // پرکردن تمام‌صفحه: نسخه‌ی بسیار کوچک فریم → بزرگ‌شده = پس‌زمینه‌ی نرم همرنگ
+      const b = bgBlur(img);
+      ctx.drawImage(b, -cw * 0.04, -ch * 0.04, cw * 1.08, ch * 1.08);
+      drawContainSoft(img, dx, dy, dw, dh, 1);
+    } else {
+      ctx.drawImage(img, dx, dy, dw, dh);
+    }
     if (alpha < 1) ctx.globalAlpha = 1;
+  }
+
+  const bgCanvas = document.createElement("canvas");
+  bgCanvas.width = 20; bgCanvas.height = 36;
+  const bgCtx = bgCanvas.getContext("2d");
+  function bgBlur(img) {
+    try {
+      bgCtx.drawImage(img, 0, 0, 20, 36);
+    } catch (e) { /* ساکت */ }
+    return bgCanvas;
   }
 
   function drawFrame(car, i, nextCar, nextI, mix, sx, sy) {
@@ -154,6 +172,46 @@
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     drawImageCover(car, i, 1, sx, sy);
     if (nextCar !== null && mix > 0) drawImageCover(nextCar, nextI, mix, sx, sy);
+  }
+
+  // بافر و ماسک آلفا برای محوشدن لبه‌های فریم‌های contain در پس‌زمینه‌ی پرشده
+  const edgeCanvas = document.createElement("canvas");
+  const edgeCtx = edgeCanvas.getContext("2d");
+  const maskCanvas = document.createElement("canvas");
+  const maskCtx = maskCanvas.getContext("2d");
+  function buildMask(w, h) {
+    if (maskCanvas.width === w && maskCanvas.height === h) return;
+    maskCanvas.width = w; maskCanvas.height = h;
+    maskCtx.clearRect(0, 0, w, h);
+    const fx = Math.max(24, w * 0.10), fy = Math.max(24, h * 0.10);
+    const gx = maskCtx.createLinearGradient(0, 0, w, 0);
+    gx.addColorStop(0, "rgba(0,0,0,0)");
+    gx.addColorStop(fx / w, "rgba(0,0,0,1)");
+    gx.addColorStop(1 - fx / w, "rgba(0,0,0,1)");
+    gx.addColorStop(1, "rgba(0,0,0,0)");
+    maskCtx.fillStyle = gx; maskCtx.fillRect(0, 0, w, h);
+    maskCtx.globalCompositeOperation = "destination-in";
+    const gy = maskCtx.createLinearGradient(0, 0, 0, h);
+    gy.addColorStop(0, "rgba(0,0,0,0)");
+    gy.addColorStop(fy / h, "rgba(0,0,0,1)");
+    gy.addColorStop(1 - fy / h, "rgba(0,0,0,1)");
+    gy.addColorStop(1, "rgba(0,0,0,0)");
+    maskCtx.fillStyle = gy; maskCtx.fillRect(0, 0, w, h);
+    maskCtx.globalCompositeOperation = "source-over";
+  }
+
+  function drawContainSoft(img, dx, dy, dw, dh, alpha) {
+    const w = canvas.width, h = canvas.height;
+    buildMask(w, h);
+    if (edgeCanvas.width !== w || edgeCanvas.height !== h) { edgeCanvas.width = w; edgeCanvas.height = h; }
+    edgeCtx.clearRect(0, 0, w, h);
+    edgeCtx.drawImage(img, dx, dy, dw, dh);
+    edgeCtx.globalCompositeOperation = "destination-in";
+    edgeCtx.drawImage(maskCanvas, 0, 0);
+    edgeCtx.globalCompositeOperation = "source-over";
+    if (alpha < 1) ctx.globalAlpha = alpha;
+    ctx.drawImage(edgeCanvas, 0, 0);
+    if (alpha < 1) ctx.globalAlpha = 1;
   }
 
   // ---------- خط زمانی ۴ ماشین ----------
