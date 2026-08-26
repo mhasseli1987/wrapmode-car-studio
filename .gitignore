@@ -36,6 +36,13 @@ yarn-error.log*
 # vercel
 .vercel
 
+# کارهای موقت پردازش ویدیو
+/tmp-clean*/
+/tmp-raw/
+/tmp-samples/
+/*.jpg
+/*.png
+
 # typescript
 next-env.d.ts
 /dist/
