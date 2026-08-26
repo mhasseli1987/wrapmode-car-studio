@@ -4,7 +4,7 @@
 
   // ---------- پیکربندی ----------
   const CARS = [
-    { dir: "frames6/car1/", count: 51, label: "رپ کامل بدنه — نسخه ۰۱", price: 48500000 },
+    { dir: "frames6/car1/", count: 51, fit: "cover", label: "رپ کامل بدنه — نسخه ۰۱", price: 48500000 },
     { dir: "frames5/car2/", count: 151, label: "رپ کامل بدنه — نسخه ۰۲", price: 52000000 },
     { dir: "frames5/car3/", count: 151, label: "رپ کامل بدنه — نسخه ۰۳", price: 45000000 },
     { dir: "frames5/car4/", count: 151, label: "رپ کامل بدنه — نسخه ۰۴", price: 60000000 },
@@ -136,8 +136,10 @@
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
     const pad = isMobile() ? 0.9 : 0.92;
-    // contain: کل فریم (و کل ماشین) داخل صفحه می‌ماند — هیچ برشی نداریم
-    const scale = Math.min(cw / iw, ch / ih) * pad;
+    // cover: فریم کل صفحه را می‌پوشاند (برش اضافی) — contain: کل فریم داخل صفحه
+    const scale = CARS[car].fit === "cover"
+      ? Math.max(cw / iw, ch / ih)
+      : Math.min(cw / iw, ch / ih) * pad;
     const dw = iw * scale, dh = ih * scale;
     const dx = (cw - dw) / 2 + sx * cw;
     const dy = (ch - dh) / 2 + sy * ch;
