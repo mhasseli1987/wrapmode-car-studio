@@ -4,10 +4,10 @@
 
   // ---------- پیکربندی ----------
   const CARS = [
-    { dir: "frames/car1/", label: "رپ کامل بدنه — نسخه ۰۱", price: 48500000 },
-    { dir: "frames/car2/", label: "رپ کامل بدنه — نسخه ۰۲", price: 52000000 },
-    { dir: "frames/car3/", label: "رپ کامل بدنه — نسخه ۰۳", price: 45000000 },
-    { dir: "frames/car4/", label: "رپ کامل بدنه — نسخه ۰۴", price: 60000000 },
+    { dir: "frames5/car1/", label: "رپ کامل بدنه — نسخه ۰۱", price: 48500000 },
+    { dir: "frames5/car2/", label: "رپ کامل بدنه — نسخه ۰۲", price: 52000000 },
+    { dir: "frames5/car3/", label: "رپ کامل بدنه — نسخه ۰۳", price: 45000000 },
+    { dir: "frames5/car4/", label: "رپ کامل بدنه — نسخه ۰۴", price: 60000000 },
   ];
   const FRAMES_PER_CAR = 151;
   const TOTAL_FRAMES = FRAMES_PER_CAR * CARS.length;
@@ -111,7 +111,7 @@
   }
 
   function resizeCanvas() {
-    const dpr = Math.min(window.devicePixelRatio || 1, isMobile() ? 1.5 : 1.75);
+    const dpr = Math.min(window.devicePixelRatio || 1, isMobile() ? 1.75 : 1.5);
     canvas.width = Math.floor(window.innerWidth * dpr);
     canvas.height = Math.floor(window.innerHeight * dpr);
     ctx.imageSmoothingEnabled = true;
