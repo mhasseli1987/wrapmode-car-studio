@@ -4,13 +4,12 @@
 
   // ---------- پیکربندی ----------
   const CARS = [
-    { dir: "frames5/car1/", label: "رپ کامل بدنه — نسخه ۰۱", price: 48500000 },
-    { dir: "frames5/car2/", label: "رپ کامل بدنه — نسخه ۰۲", price: 52000000 },
-    { dir: "frames5/car3/", label: "رپ کامل بدنه — نسخه ۰۳", price: 45000000 },
-    { dir: "frames5/car4/", label: "رپ کامل بدنه — نسخه ۰۴", price: 60000000 },
+    { dir: "frames6/car1/", count: 51, label: "رپ کامل بدنه — نسخه ۰۱", price: 48500000 },
+    { dir: "frames5/car2/", count: 151, label: "رپ کامل بدنه — نسخه ۰۲", price: 52000000 },
+    { dir: "frames5/car3/", count: 151, label: "رپ کامل بدنه — نسخه ۰۳", price: 45000000 },
+    { dir: "frames5/car4/", count: 151, label: "رپ کامل بدنه — نسخه ۰۴", price: 60000000 },
   ];
-  const FRAMES_PER_CAR = 151;
-  const TOTAL_FRAMES = FRAMES_PER_CAR * CARS.length;
+  const TOTAL_FRAMES = CARS.reduce((s, c) => s + c.count, 0);
 
   const INTRO_END = 0.03;      // سهم هیرو
   const TIMELINE_END = 0.97;   // پایان بلوک ماشین چهارم
@@ -45,7 +44,7 @@
       });
 
   // ---------- بارگذاری فریم‌ها (دوفازی) ----------
-  const frames = CARS.map(() => new Array(FRAMES_PER_CAR).fill(null));
+  const frames = CARS.map((c) => new Array(c.count).fill(null));
   let loaded = 0;
   const path = (car, i) => `${CARS[car].dir}f_${String(i + 1).padStart(4, "0")}.webp`;
 
@@ -64,7 +63,7 @@
     });
   }
 
-  const READY_AT = Math.min(isMobile() ? 18 : 24, FRAMES_PER_CAR);
+  const READY_AT = Math.min(isMobile() ? 18 : 24, CARS[0].count);
   let loaderHidden = false;
 
   async function preload() {
@@ -80,11 +79,12 @@
 
     // فاز ۲: بقیه به‌صورت دسته‌ای موازی بین ماشین‌ها
     const batch = isMobile() ? 8 : 16;
-    for (let start = READY_AT; start < FRAMES_PER_CAR; start += batch) {
+    const maxCount = Math.max(...CARS.map((c) => c.count));
+    for (let start = READY_AT; start < maxCount; start += batch) {
       const jobs = [];
-      const end = Math.min(start + batch, FRAMES_PER_CAR);
+      const end = Math.min(start + batch, maxCount);
       for (let c = 0; c < CARS.length; c++)
-        for (let i = start; i < end; i++) jobs.push(loadOne(c, i));
+        for (let i = start; i < end && i < CARS[c].count; i++) jobs.push(loadOne(c, i));
       await Promise.all(jobs);
     }
   }
@@ -120,9 +120,10 @@
 
   function nearestLoaded(car, i) {
     if (frames[car][i]) return i;
-    for (let d = 1; d < FRAMES_PER_CAR; d++) {
+    const count = CARS[car].count;
+    for (let d = 1; d < count; d++) {
       if (frames[car][i - d] && i - d >= 0) return i - d;
-      if (frames[car][i + d] && i + d < FRAMES_PER_CAR) return i + d;
+      if (frames[car][i + d] && i + d < count) return i + d;
     }
     return 0;
   }
@@ -160,20 +161,20 @@
     const car = Math.min(CARS.length - 1, Math.floor(pos));
     const local = pos - car;
     const t = Math.min(1, Math.max(0, local / FRAME_PART));
-    const idx = t * (FRAMES_PER_CAR - 1);
+    const idx = t * (CARS[car].count - 1);
 
     // کراس‌فید به ماشین بعدی در انتهای بلوک
     if (car < CARS.length - 1 && local > 1 - XF_LOCAL) {
       const mix = (local - (1 - XF_LOCAL)) / XF_LOCAL;
       const nt = Math.min(1, (mix * 0.1) / FRAME_PART);
-      return { car, idx, nextCar: car + 1, nextIdx: nt * (FRAMES_PER_CAR - 1), mix };
+      return { car, idx, nextCar: car + 1, nextIdx: nt * (CARS[car + 1].count - 1), mix };
     }
     // کراس‌فید از ماشین قبلی در ابتدای بلوک
     if (car > 0 && local < XF_LOCAL * 0.5) {
       const mix = 1 - local / (XF_LOCAL * 0.5);
       const prevLocal = 1 - (XF_LOCAL * 0.5 - local) / XF_LOCAL;
       const pt = Math.min(1, prevLocal / FRAME_PART);
-      return { car: car - 1, idx: pt * (FRAMES_PER_CAR - 1), nextCar: car, nextIdx: idx, mix };
+      return { car: car - 1, idx: pt * (CARS[car - 1].count - 1), nextCar: car, nextIdx: idx, mix };
     }
     return { car, idx, nextCar: null, nextIdx: 0, mix: 0 };
   }
@@ -223,7 +224,7 @@
   function prefetchAround(car, idx) {
     for (let k = -10; k <= 14; k++) {
       const i = idx + k;
-      if (i < 0 || i >= FRAMES_PER_CAR) continue;
+      if (i < 0 || i >= CARS[car].count) continue;
       const img = frames[car][i];
       if (img && !decodeSet.has(img) && img.decode) {
         decodeSet.add(img);
