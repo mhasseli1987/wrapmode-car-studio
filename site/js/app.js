@@ -6,7 +6,7 @@
   const CARS = [
     { dir: "frames6/car1/", count: 51, fit: "cover", label: "رپ کامل بدنه — نسخه ۰۱", price: 48500000 },
     { dir: "frames7/car2/", count: 106, fit: "cover", label: "رپ کامل بدنه — نسخه ۰۲", price: 52000000 },
-    { dir: "frames5/car3/", count: 151, label: "رپ کامل بدنه — نسخه ۰۳", price: 45000000 },
+    { dir: "frames8/car3/", count: 51, fit: "cover", label: "رپ کامل بدنه — نسخه ۰۳", price: 45000000 },
     { dir: "frames5/car4/", count: 151, label: "رپ کامل بدنه — نسخه ۰۴", price: 60000000 },
   ];
   const TOTAL_FRAMES = CARS.reduce((s, c) => s + c.count, 0);

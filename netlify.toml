@@ -18,6 +18,11 @@ command = ""
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
+  for = "/frames8/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
   for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
