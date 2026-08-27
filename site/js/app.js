@@ -111,7 +111,7 @@
   }
 
   function resizeCanvas() {
-    const dpr = Math.min(window.devicePixelRatio || 1, isMobile() ? 1.75 : 1.5);
+    const dpr = Math.min(window.devicePixelRatio || 1, isMobile() ? 2 : 1.75);
     canvas.width = Math.floor(window.innerWidth * dpr);
     canvas.height = Math.floor(window.innerHeight * dpr);
     ctx.imageSmoothingEnabled = true;
@@ -137,21 +137,28 @@
     const ih = img.naturalHeight || img.height;
     const pad = isMobile() ? 0.9 : 0.92;
     const isCover = CARS[car].fit === "cover";
-    // cover: فریم کل صفحه را می‌پوشاند (برش اضافی) — contain: کل فریم داخل صفحه
-    const scale = isCover
-      ? Math.max(cw / iw, ch / ih)
-      : Math.min(cw / iw, ch / ih) * pad;
+    // کاور امن: تا جایی که برش عمودی از ~۲۰٪ بیشتر نشود پوشش کامل؛
+    // بیشتر از آن اولویت با ارتفاع کامل فریم است (جلوعقب ماشین هرگز بریده نشود)
+    let scale;
+    if (isCover) {
+      const sxc = cw / iw, syc = ch / ih;
+      scale = sxc > syc * 1.2 ? syc : Math.max(sxc, syc);
+    } else {
+      scale = Math.min(cw / iw, ch / ih) * pad;
+    }
     const dw = iw * scale, dh = ih * scale;
     const dx = (cw - dw) / 2 + sx * cw;
     const dy = (ch - dh) / 2 + sy * ch;
     if (alpha < 1) ctx.globalAlpha = alpha;
-    if (!isCover) {
+    if (!isCover || dw < cw - 1) {
       // پرکردن تمام‌صفحه: نسخه‌ی بسیار کوچک فریم → بزرگ‌شده = پس‌زمینه‌ی نرم همرنگ
       const b = bgBlur(img);
       ctx.drawImage(b, -cw * 0.04, -ch * 0.04, cw * 1.08, ch * 1.08);
-      drawContainSoft(img, dx, dy, dw, dh, 1);
-    } else {
+    }
+    if (isCover) {
       ctx.drawImage(img, dx, dy, dw, dh);
+    } else {
+      drawContainSoft(img, dx, dy, dw, dh, 1);
     }
     if (alpha < 1) ctx.globalAlpha = 1;
   }
