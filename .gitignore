@@ -50,3 +50,6 @@ next-env.d.ts
 /outputs/
 /work/
 /tmp-user-frames/
+tmp-frames2/
+tmp-frames3/
+tmp-preview/

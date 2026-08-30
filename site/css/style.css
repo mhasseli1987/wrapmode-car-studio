@@ -178,7 +178,7 @@ img { max-width: 100%; display: block; }
 }
 
 /* ---------- اسکرول و سکشن‌ها ---------- */
-#scroll-container { position: relative; height: 2800vh; }
+#scroll-container { position: relative; height: 1400vh; }
 
 .scroll-section {
   position: absolute; right: 0; left: 0;
@@ -354,11 +354,16 @@ img { max-width: 100%; display: block; }
 
 /* ---------- موبایل ---------- */
 @media (max-width: 768px) {
-  #scroll-container { height: 2200vh; }
+  #scroll-container { height: 1100vh; }
   .section-content.align-right, .section-content.align-left { padding: 0 5vw; }
   .section-content .section-inner { max-width: 100%; }
   .car-card.align-left, .car-card.align-right { justify-content: center; padding: 0 4vw; }
-  .car-card .section-inner { max-width: 100%; background: rgba(14, 11, 22, 0.72); }
+  .car-card .section-inner { max-width: 100%; background: rgba(14, 11, 22, 0.72); padding: 18px 20px; }
+  .car-card .section-body { font-size: 0.85rem; line-height: 1.8; }
+  .car-card .spec-list { margin: 10px 0 2px; gap: 5px; }
+  .car-card .spec-list li { font-size: 0.8rem; }
+  .car-card .price-row { margin: 10px 0 2px; }
+  .car-card .scroll-hint { display: none; }
   .scroll-section { padding: 0 4vw; }
   .scroll-indicator { bottom: 18px; }
   .wa-float { bottom: 16px; left: 16px; width: 44px; height: 44px; }
