@@ -53,3 +53,5 @@ next-env.d.ts
 tmp-frames2/
 tmp-frames3/
 tmp-preview/
+
+reference/*.mp4
