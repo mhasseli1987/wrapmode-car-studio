@@ -202,6 +202,8 @@ img { max-width: 100%; display: block; }
 .section-content.align-left { padding-right: 55vw; padding-left: 5vw; }
 .car-card.align-left { display: flex; justify-content: flex-start; }
 .car-card.align-right { display: flex; justify-content: flex-end; }
+/* کارت طرح‌ها پایین صفحه می‌نشیند تا ماشین پشت آن پنهان نشود */
+.car-card { transform: translateY(calc(-50% + 27vh)); }
 .section-content .section-inner { max-width: 40vw; }
 .car-card .section-inner { max-width: 420px; width: 100%; }
 

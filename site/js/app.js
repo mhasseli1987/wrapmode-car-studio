@@ -17,11 +17,49 @@
     { label: "فول‌بادی — لیوری طوسی/طلایی (پرچم‌دار)", price: 45000000 },
   ];
 
-  const INTRO_END = 0.03;    // سهم هیرو
-  const TIMELINE_END = 0.97; // پایان کلیپ
+  // سگمنت‌های پایدار هر طرح (بازه‌ی بدون دیپِ کراس‌فید) — ایندکس صفرِ مبنا
+  const SEGMENTS = [
+    { from: 0,   hold: 31  }, // ۱ ساکورا سفید
+    { from: 40,  hold: 66  }, // ۲ آنیمه شب
+    { from: 76,  hold: 103 }, // ۳ گرافیتی آبی
+    { from: 113, hold: 139 }, // ۴ ریسینگ نارنجی
+    { from: 149, hold: 175 }, // ۵ کارتون قرمز
+    { from: 185, hold: 211 }, // ۶ کارتون سفید
+    { from: 221, hold: 264 }, // ۷ استریپ
+    { from: 274, hold: 304 }, // ۸ پرچم‌دار
+  ];
+  const INTRO_END = 0.03;   // سهم کارت معرفی
+  const HOLD_FRAC = 0.38;   // سهم توقف روی فریم آخر + کارت از هر سگمنت
+  const BLEND_FRAC = 0.10;  // محوی ورود به اسکراب هر طرح
+  // فریم‌های ۴۰ تا ۲۱۲ در سورس لترباکس ۷۲۰×۴۰۴ دارند (طرح‌های ۲ تا ۶) → پر کردن بالا/پایین با آینه‌ی تیز
+  const BAND = { lo: 40, hi: 212, y0: 436, y1: 840 };
+
+  function timelineAt(t) {
+    const n = SEGMENTS.length;
+    const span = 1 / n;
+    if (t <= 0) return { idx: 0, blend: 0, blendIdx: 0 };
+    const k = Math.min(n - 1, Math.floor(t / span));
+    const local = (t - k * span) / span;
+    const seg = SEGMENTS[k];
+    const scrubEnd = 1 - HOLD_FRAC;
+    if (local < scrubEnd) {
+      const q = local / scrubEnd;
+      const idx = Math.round(seg.from + q * (seg.hold - seg.from));
+      let blend = 0, blendIdx = 0;
+      if (k > 0 && local < BLEND_FRAC) {
+        blend = 1 - local / BLEND_FRAC;
+        blendIdx = SEGMENTS[k - 1].hold;
+      }
+      return { idx, blend, blendIdx };
+    }
+    return { idx: seg.hold, blend: 0, blendIdx: 0 }; // توقف روی فریم آخر + کارت
+  }
 
   const WA_NUMBER = "989304140872";
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // ?nomotion — حالت تست: بدون lenis تا اسکرول برنامه‌ای دقیق باشد
+  const prefersReducedMotion =
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    new URLSearchParams(location.search).has("nomotion");
   const mobileMQ = window.matchMedia("(max-width: 768px)");
   const isMobile = () => mobileMQ.matches;
 
@@ -136,18 +174,78 @@
     const cw = canvas.width, ch = canvas.height;
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
-    // کاور واقعی: پر شدن کامل از هر ۴ طرف با لبه‌ی تیز — بدون بلور و ماسک نرم
+
+    // سگمنت لترباکس: باند اصلی تمام‌پهنا (کمی بالاتر از مرکز تا جا برای کارت باشد)
+    // + بالا/پایین با بازتاب تیز خود صحنه و محو نرم (بدون بلور، بدون نوار سیاه)
+    if (resolved >= BAND.lo && resolved <= BAND.hi) {
+      const bh = BAND.y1 - BAND.y0;
+      const s = cw / iw;
+      const dh = bh * s;
+      const y0 = Math.round((ch - dh) * 0.4);
+      ctx.drawImage(img, 0, BAND.y0, iw, bh, 0, y0, cw, dh);
+      drawMirror(resolved, img, -1, y0, y0, cw);
+      drawMirror(resolved, img, 1, y0 + dh, ch - y0 - dh, cw);
+      return;
+    }
+
+    // کاور واقعی: پر شدن کامل از هر ۴ طرف با لبه‌ی تیز
     const scale = Math.max(cw / iw, ch / ih);
     const dw = iw * scale, dh = ih * scale;
     const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
     ctx.drawImage(img, dx, dy, dw, dh);
   }
 
-  function drawFrame(i) {
+  // بازتاب تیز از لبه‌ی باند به بیرون؛ بالا فقط نوار پس‌زمینه (تا ماشین وارونه دیده نشود)،
+  // پایین فقط ناحیه‌ی کف (مثل انعکاس زیر ماشین) — باقیمانده با محو نرمِ رنگ لبه پر می‌شود
+  const mirrorEdgeCache = new Map();
+
+  function drawMirror(idx, img, dir, seamY, avail, cw) {
+    if (avail <= 1) return;
+    const bh = BAND.y1 - BAND.y0;
+    const iw = img.naturalWidth || img.width;
+    const s = cw / iw;
+    const maxSrc = Math.round(bh * (dir < 0 ? 0.19 : 0.32));
+    const srcH = Math.min(maxSrc, Math.ceil(avail / s));
+    const H = srcH * s;
+    const sy = dir < 0 ? BAND.y0 : BAND.y1 - srcH;
+    ctx.save();
+    ctx.translate(0, dir < 0 ? seamY : seamY + H);
+    ctx.scale(1, -1);
+    ctx.drawImage(img, 0, sy, iw, srcH, 0, 0, cw, H);
+    ctx.restore();
+
+    const drawn = Math.min(H, avail);
+    if (drawn >= avail - 1) return;
+    // محو نرم از رنگ ردیف انتهایی بازتاب به تیره‌تر — ادامه‌ی طبیعی فضا
+    const key = idx + ":" + dir;
+    let rgb = mirrorEdgeCache.get(key);
+    if (!rgb) {
+      try {
+        const t = document.createElement("canvas");
+        t.width = 1; t.height = 1;
+        const tcx = t.getContext("2d");
+        tcx.drawImage(img, 0, dir < 0 ? BAND.y0 + srcH : sy, iw, 1, 0, 0, 1, 1);
+        rgb = [...tcx.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+      } catch (e) { rgb = [10, 8, 16]; }
+      mirrorEdgeCache.set(key, rgb);
+    }
+    const g0 = ctx.createLinearGradient(0, dir < 0 ? seamY - drawn : seamY + drawn, 0, dir < 0 ? seamY - avail : seamY + avail);
+    g0.addColorStop(0, `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`);
+    g0.addColorStop(1, `rgb(${(rgb[0] * 0.3) | 0},${(rgb[1] * 0.3) | 0},${(rgb[2] * 0.3) | 0})`);
+    ctx.fillStyle = g0;
+    ctx.fillRect(0, dir < 0 ? seamY - avail : seamY + drawn, cw, avail - drawn);
+  }
+
+  function drawFrame(i, blendIdx, blend) {
     if (!canvas.width) resizeCanvas();
     ctx.fillStyle = bgTint;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     drawImageCover(i);
+    if (blend > 0.01) {
+      ctx.globalAlpha = blend;
+      drawImageCover(blendIdx);
+      ctx.globalAlpha = 1;
+    }
   }
 
   // ---------- هموارسازی فریم (رندر پیوسته) ----------
@@ -168,18 +266,20 @@
   }
 
   function render() {
-    const idx = Math.round(smoothQ * (FRAME_COUNT - 1)); // سرعت یکنواخت
+    const { idx, blend, blendIdx } = timelineAt(smoothQ); // اسکراب یکنواخت → توقف روی فریم آخر
     sampleBg(idx % 20 === 0 ? idx : -1);
-    drawFrame(idx);
+    drawFrame(idx, blendIdx, blend);
     prefetchAround(idx);
   }
 
   let lastP = -1;
 
+  let lastStepAt = 0;
+
   function startRenderLoop() {
     gsap.ticker.lagSmoothing(0);
-    let rafTicked = false;
     const step = (timeMs) => {
+      lastStepAt = performance.now();
       if (lenis) {
         try { lenis.raf(timeMs); }
         catch (e) { lenis = null; } // یک خطای lenis نباید کل رندر را بکشد
@@ -193,7 +293,7 @@
           syncOverlay();
           syncSections(p);
           syncCounters(p);
-          targetQ = Math.min(1, Math.max(0, (p - INTRO_END) / (TIMELINE_END - INTRO_END)));
+          targetQ = Math.min(1, Math.max(0, (p - INTRO_END) / (1 - INTRO_END)));
         } catch (e) { /* سکشن‌ها هرگز نباید رندر را متوقف کنند */ }
       }
       const ease = isMobile() ? 0.22 : 0.16;
@@ -203,9 +303,11 @@
         try { render(); } catch (e) {}
       }
     };
-    gsap.ticker.add((time) => { rafTicked = true; step(time * 1000); });
-    // اگر requestAnimationFrame در محیط اجرا نشود (وب‌ویوهای پس‌زمینه)، تیک جایگزین:
-    setInterval(() => { if (rafTicked) rafTicked = false; else step(performance.now()); }, 33);
+    gsap.ticker.add((time) => { step(time * 1000); });
+    // اگر rAF کند یا متوقف شود (وب‌ویو throttled)، تیک جایگزین زمان‌محور خودش قدم می‌زند
+    setInterval(() => {
+      if (performance.now() - lastStepAt > 100) step(performance.now());
+    }, 33);
   }
 
   // ---------- سکشن‌ها ----------
@@ -222,7 +324,6 @@
   function setupSectionDrivers() {
     window._sectionDrivers = [];
     document.querySelectorAll(".scroll-section").forEach((section) => {
-      const type = section.dataset.animation;
       const persist = section.dataset.persist === "true";
       const enter = parseFloat(section.dataset.enter) / 100;
       const leave = parseFloat(section.dataset.leave) / 100;
@@ -232,19 +333,11 @@
 
       gsap.set(children, { clearProps: "all" });
       const tl = gsap.timeline({ paused: true });
-      const from =
-        type === "slide-left"
-          ? { x: -48, opacity: 0 }
-          : type === "slide-right"
-            ? { x: 48, opacity: 0 }
-            : type === "scale-up"
-              ? { scale: 0.92, opacity: 0 }
-              : { y: 32, opacity: 0 };
-
+      // کارت کاملاً ثابت می‌ماند — فقط محو شدن، بدون حرکت
       tl.fromTo(
         children,
-        { ...from },
-        { x: 0, y: 0, scale: 1, opacity: 1, stagger: 0.07, duration: 0.55, ease: "power2.out" }
+        { opacity: 0 },
+        { opacity: 1, stagger: 0.06, duration: 0.4, ease: "power1.out" }
       );
 
       window._sectionDrivers.push({ section, enter, leave, persist, tl, maxSeen: 0 });
@@ -264,13 +357,13 @@
         if (d.maxSeen > 0.02) d.section.classList.add("is-in");
       } else if (p >= d.enter && p <= d.leave) {
         d.section.classList.add("is-in");
-        d.tl.progress(Math.min(1, local * 1.35));
+        d.tl.progress(Math.min(1, local * 4)); // سریع ظاهر می‌شود و تا آخر زون کاملاً ثابت می‌ماند
       } else if (p < d.enter) {
         d.section.classList.remove("is-in");
         d.tl.progress(0);
       } else {
         d.section.classList.remove("is-in");
-        d.tl.progress(Math.max(0, 1 - (p - d.leave) / 0.03));
+        d.tl.progress(Math.max(0, 1 - (p - d.leave) / 0.008));
       }
     });
   }
@@ -306,9 +399,9 @@
 
   // ---------- هیرو / اورلی ----------
   function syncHero(p) {
-    const heroFade = Math.max(0, 1 - p * 7);
+    const heroFade = Math.max(0, 1 - p * 33); // تا شروع اسکرولِ طرح ۱ محو می‌شود
     heroSection.style.opacity = String(heroFade);
-    heroSection.style.pointerEvents = p > 0.14 ? "none" : "auto";
+    heroSection.style.pointerEvents = p > 0.04 ? "none" : "auto";
     canvasWrap.style.opacity = "1";
   }
 
