@@ -112,8 +112,10 @@
 
   function resizeCanvas() {
     const dpr = Math.min(window.devicePixelRatio || 1, isMobile() ? 2 : 1.75);
-    canvas.width = Math.floor(window.innerWidth * dpr);
-    canvas.height = Math.floor(window.innerHeight * dpr);
+    const w = canvasWrap.clientWidth || window.innerWidth;
+    const h = canvasWrap.clientHeight || window.innerHeight;
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
   }
@@ -134,65 +136,11 @@
     const cw = canvas.width, ch = canvas.height;
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
-    // کاور امن: تا وقتی برش عمودی معقول است پوشش کامل؛ وگرنه ارتفاع کامل فریم
-    const sxc = cw / iw, syc = ch / ih;
-    const scale = sxc > syc * 1.2 ? syc : Math.max(sxc, syc);
+    // کاور واقعی: پر شدن کامل از هر ۴ طرف با لبه‌ی تیز — بدون بلور و ماسک نرم
+    const scale = Math.max(cw / iw, ch / ih);
     const dw = iw * scale, dh = ih * scale;
     const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
-    if (dw < cw - 1 || dh < ch - 1) {
-      // پرکردن تمام‌صفحه: نسخه‌ی کوچک فریم با بلور نرم + فریم با لبه‌ی آلفای محو
-      drawBlurredFill(img);
-      drawSoftFrame(img, dx, dy, dw, dh);
-    } else {
-      ctx.drawImage(img, dx, dy, dw, dh);
-    }
-  }
-
-  const bgCanvas = document.createElement("canvas");
-  bgCanvas.width = 24; bgCanvas.height = 43;
-  const bgCtx = bgCanvas.getContext("2d");
-  function drawBlurredFill(img) {
-    try { bgCtx.drawImage(img, 0, 0, bgCanvas.width, bgCanvas.height); } catch (e) {}
-    const cw = canvas.width, ch = canvas.height;
-    ctx.save();
-    try { ctx.filter = "blur(28px)"; } catch (e) {}
-    ctx.drawImage(bgCanvas, -cw * 0.05, -ch * 0.05, cw * 1.1, ch * 1.1);
-    ctx.restore();
-  }
-
-  // فریم وسط با ماسک لبه‌ی نرم (محوِ ~۱۵٪ هر طرفِ خود فریم)
-  const edgeCanvas = document.createElement("canvas");
-  const edgeCtx = edgeCanvas.getContext("2d");
-  const maskCanvas = document.createElement("canvas");
-  const maskCtx = maskCanvas.getContext("2d");
-  function drawSoftFrame(img, dx, dy, dw, dh) {
-    const w = Math.max(2, Math.round(dw)), h = Math.max(2, Math.round(dh));
-    if (edgeCanvas.width !== w || edgeCanvas.height !== h) {
-      edgeCanvas.width = w; edgeCanvas.height = h;
-      maskCanvas.width = w; maskCanvas.height = h;
-      const fx = w * 0.16, fy = h * 0.07;
-      maskCtx.clearRect(0, 0, w, h);
-      const gx = maskCtx.createLinearGradient(0, 0, w, 0);
-      gx.addColorStop(0, "rgba(0,0,0,0)");
-      gx.addColorStop(fx / w, "rgba(0,0,0,1)");
-      gx.addColorStop(1 - fx / w, "rgba(0,0,0,1)");
-      gx.addColorStop(1, "rgba(0,0,0,0)");
-      maskCtx.fillStyle = gx; maskCtx.fillRect(0, 0, w, h);
-      maskCtx.globalCompositeOperation = "destination-in";
-      const gy = maskCtx.createLinearGradient(0, 0, 0, h);
-      gy.addColorStop(0, "rgba(0,0,0,0)");
-      gy.addColorStop(fy / h, "rgba(0,0,0,1)");
-      gy.addColorStop(1 - fy / h, "rgba(0,0,0,1)");
-      gy.addColorStop(1, "rgba(0,0,0,0)");
-      maskCtx.fillStyle = gy; maskCtx.fillRect(0, 0, w, h);
-      maskCtx.globalCompositeOperation = "source-over";
-    }
-    edgeCtx.clearRect(0, 0, w, h);
-    edgeCtx.drawImage(img, 0, 0, w, h);
-    edgeCtx.globalCompositeOperation = "destination-in";
-    edgeCtx.drawImage(maskCanvas, 0, 0);
-    edgeCtx.globalCompositeOperation = "source-over";
-    ctx.drawImage(edgeCanvas, dx, dy);
+    ctx.drawImage(img, dx, dy, dw, dh);
   }
 
   function drawFrame(i) {

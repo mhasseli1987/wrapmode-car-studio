@@ -171,6 +171,15 @@ img { max-width: 100%; display: block; }
   position: fixed; inset: 0; z-index: 1;
   background: var(--bg-deep);
 }
+/* پنجره‌ی عریض‌تر از فریم ۹:۱۶ → صحنه‌ی عمودی تمام‌ارتفاع وسط:
+   فریم کامل دیده می‌شود (بدون برش ماشین) با لبه‌ی تیز، دو طرف پس‌زمینه‌ی برند */
+@media (min-aspect-ratio: 0.68) {
+  .canvas-wrap {
+    width: min(100vw, 56.25vh);
+    margin-inline: auto;
+    box-shadow: 0 0 90px rgba(0, 0, 0, 0.55);
+  }
+}
 #canvas { width: 100%; height: 100%; display: block; }
 #dark-overlay {
   position: fixed; inset: 0; z-index: 5;
