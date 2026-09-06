@@ -1,309 +1,392 @@
+/* WRAPMODE — کلیپ استودیو ۳:۲ تمام‌صفحه، یک take پیوسته (v13 — پالیش ظاهری: قاب کپشن، لودر، هاور کارت، هدر، اسکریم هیرو) */
 :root {
-  --bg-deep: #07060b;
-  --bg-dark: #0e0b16;
-  --bg-elevated: #171226;
-  --text-on-dark: #f2eee8;
-  --text-muted: #a79fb4;
-  --accent: #c4a265;
-  --accent-soft: rgba(196, 162, 101, 0.18);
-  --border: rgba(242, 238, 232, 0.12);
-  --glass-bg: rgba(14, 11, 22, 0.55);
-  --font-display: "Cinzel", "Vazirmatn", serif;
-  --font-body: "Vazirmatn", system-ui, sans-serif;
+  --bg: #050408;
+  --bg2: #0c0913;          /* بنفش خیلی تیره برند */
+  --ink: #f5f1e8;          /* کرم روشن */
+  --mut: #a49bad;
+  --accent: #c9a25e;       /* طلایی عتیقه */
+  --hairline: rgba(245, 241, 232, 0.1);
+  --font-display: "Cormorant Garamond", "Vazirmatn", serif;
+  --font-body: "Vazirmatn", "Inter", system-ui, sans-serif;
   --touch-min: 44px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 [hidden] { display: none !important; }
-
 html { scroll-behavior: auto; }
 
 body {
-  background: var(--bg-deep);
-  color: var(--text-on-dark);
+  background: var(--bg);
+  color: var(--ink);
   font-family: var(--font-body);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: var(--accent); color: var(--bg-deep); }
-
+::selection { background: var(--accent); color: var(--bg); }
 img { max-width: 100%; display: block; }
+
+.latin { font-family: var(--font-display); font-weight: 500; }
+[dir="ltr"] .latin { font-family: var(--font-display); }
+
+.kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.35em; text-indent: 0.35em;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ---------- گرین فیلم ---------- */
+.grain {
+  position: fixed; inset: -50%; z-index: 90;
+  pointer-events: none; opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 0.9s steps(4) infinite;
+}
+@keyframes grain-shift {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-2%, 3%); }
+  50% { transform: translate(3%, -2%); }
+  75% { transform: translate(-3%, -3%); }
+  100% { transform: translate(2%, 2%); }
+}
+
+/* ---------- کرسر سفارشی ---------- */
+#cursor {
+  position: fixed; top: 0; left: 0; z-index: 95;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+@media (pointer: coarse) { #cursor { display: none; } }
 
 /* ---------- لودر ---------- */
 #loader {
   position: fixed; inset: 0; z-index: 100;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 22px;
-  background: var(--bg-deep);
+  gap: 20px;
+  background: var(--bg);
   transition: opacity 0.7s ease, visibility 0.7s;
 }
 #loader.done { opacity: 0; visibility: hidden; pointer-events: none; }
 .loader-brand {
   font-family: var(--font-display);
-  font-size: clamp(1.4rem, 4vw, 2.2rem);
-  letter-spacing: 0.35em; text-indent: 0.35em;
-  color: var(--text-on-dark);
+  font-size: clamp(1.5rem, 4vw, 2.3rem);
+  letter-spacing: 0.42em; text-indent: 0.42em;
+  color: var(--ink);
+}
+#loader-bar {
+  width: min(220px, 40vw); height: 1px;
+  background: var(--hairline);
+  overflow: hidden;
+}
+#loader-fill {
+  display: block; height: 100%; width: 0%;
+  background: var(--accent);
+  transition: width 0.25s ease;
 }
 #loader-percent {
   font-family: var(--font-display);
-  font-size: 0.95rem; color: var(--accent);
+  font-size: 0.9rem; color: var(--accent);
   letter-spacing: 0.12em;
   min-height: 1.4em;
-}
-.twin-orbit { position: relative; width: 34px; height: 34px; display: inline-block; }
-.twin-orbit__dot {
-  position: absolute; top: 0; left: 50%;
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--accent);
-  animation: twin-orbit-spin var(--duration, 1s) cubic-bezier(0.6, 0.05, 0.4, 0.95) infinite;
-}
-.twin-orbit__dot--delay { animation-delay: calc(var(--duration, 1s) / -2); }
-@keyframes twin-orbit-spin {
-  0%, 100% { transform: rotate(0deg) translateX(-17px) rotate(0deg); }
-  100% { transform: rotate(360deg) translateX(-17px) rotate(-360deg); }
+  min-width: 3em;          /* جلوگیری از لرزش عرض با تغییر ارقام */
+  margin-top: 4px;         /* ریتم عمودی: برند — خط — عدد */
 }
 
 /* ---------- هدر ---------- */
 .site-header {
   position: fixed; top: 0; right: 0; left: 0; z-index: 60;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 20px clamp(20px, 4vw, 56px);
-  background: linear-gradient(to bottom, rgba(7, 6, 11, 0.65), transparent);
+  padding: 18px clamp(20px, 4vw, 56px);
+  transition: background 0.35s ease, border-color 0.35s ease, padding 0.35s ease;
+  border-bottom: 1px solid transparent;
+}
+.site-header.scrolled {
+  padding-block: 12px;
+  background: rgba(5, 4, 8, 0.62);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom-color: var(--hairline);
 }
 .logo {
-  font-family: var(--font-display);
-  font-size: 1.05rem; letter-spacing: 0.3em;
-  color: var(--text-on-dark); text-decoration: none;
+  font-size: 1rem; letter-spacing: 0.34em;
+  color: var(--ink); text-decoration: none;
 }
 .site-header nav { display: flex; align-items: center; gap: clamp(14px, 2.5vw, 28px); }
-.site-header nav a, .cart-btn {
-  color: var(--text-muted); text-decoration: none;
-  font-size: 0.9rem; font-family: var(--font-body);
+.site-header nav a, .cart-btn, .lang-btn {
+  color: var(--mut); text-decoration: none;
+  font-size: 0.88rem; font-family: var(--font-body);
   background: none; border: none; cursor: pointer;
   min-height: var(--touch-min);
   display: inline-flex; align-items: center; gap: 6px;
   transition: color 0.25s;
 }
-.site-header nav a:hover, .cart-btn:hover { color: var(--text-on-dark); }
+.site-header nav a:hover, .cart-btn:hover, .lang-btn:hover { color: var(--ink); }
+.lang-btn { font-family: var(--font-display); letter-spacing: 0.14em; font-size: 0.92rem; }
 .cart-btn { color: var(--accent); }
 .cart-badge {
   min-width: 1.6em; padding: 0.1em 0.45em;
-  border-radius: 999px; background: var(--accent); color: var(--bg-deep);
-  font-size: 0.72rem; font-weight: 600;
+  border-radius: 999px; background: var(--accent); color: var(--bg);
+  font-size: 0.72rem; font-weight: 700;
 }
 
 /* ---------- هیرو ---------- */
-.hero-standalone {
-  position: relative; z-index: 40;
-  min-height: 100svh;
-  display: flex; align-items: center; justify-content: center;
-  padding: 90px clamp(20px, 6vw, 80px) 60px;
+.hero-copy {
+  position: fixed; inset: 0; z-index: 30;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px;
+  text-align: center;
+  padding: 0 clamp(20px, 6vw, 80px);
   pointer-events: none;
 }
-.hero-glass {
-  max-width: 640px; width: 100%;
-  padding: clamp(28px, 5vw, 56px);
-  border-radius: 20px;
-  background: var(--glass-bg);
-  border: 1px solid var(--border);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  text-align: center;
-  pointer-events: auto;
+/* اسکریم نرم پشت متن تا روی صحنه‌ی روشن خوانده شود */
+.hero-copy::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 66% 50% at 50% 50%, rgba(5, 4, 8, 0.72), transparent 72%);
+  pointer-events: none;
 }
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .hero-glass { background: rgba(14, 11, 22, 0.88); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.hero-copy > * { position: relative; }
+.hero-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 7vw, 4.8rem);
+  line-height: 1.3;
+  max-width: 14ch;
+  text-shadow: 0 2px 28px rgba(5, 4, 8, 0.8);
 }
-.hero-title { display: flex; flex-direction: column; gap: 10px; align-items: center; }
-.hero-latin {
-  font-family: var(--font-display);
-  font-size: clamp(0.85rem, 2vw, 1.05rem);
-  letter-spacing: 0.5em; text-indent: 0.5em;
-  color: var(--accent);
+[dir="ltr"] .hero-title { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.01em; }
+.hero-sub {
+  color: #cfc8da;
+  font-size: clamp(0.92rem, 1.8vw, 1.05rem);
+  line-height: 2;
+  max-width: 52ch;
+  font-weight: 300;
+  text-shadow: 0 1px 14px rgba(5, 4, 8, 0.9);
 }
-.hero-title-line {
-  font-family: var(--font-body); font-weight: 700;
-  font-size: clamp(2rem, 6.5vw, 3.6rem); line-height: 1.25;
-  color: var(--text-on-dark);
-  display: flex; flex-direction: column; gap: 4px;
-}
-.hero-title-line em {
-  font-style: normal; font-weight: 300;
-  font-size: 0.55em; color: var(--text-muted);
-}
-.hero-desc {
-  margin-top: 18px;
-  color: var(--text-muted); font-size: clamp(0.95rem, 2vw, 1.05rem); line-height: 2;
-}
-.hero-ctas { margin-top: 28px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-.hero-btn {
+.hero-ctas { margin-top: 14px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; pointer-events: auto; }
+.btn {
   min-height: var(--touch-min);
-  padding: 10px 28px; border-radius: 999px;
+  padding: 10px 30px; border-radius: 999px;
   font-family: var(--font-body); font-size: 0.95rem;
-  text-decoration: none; cursor: pointer;
-  border: 1px solid var(--border); color: var(--text-on-dark);
+  text-decoration: none; cursor: pointer; text-align: center;
+  border: 1px solid var(--hairline); color: var(--ink);
   background: transparent;
-  transition: border-color 0.25s, background 0.25s;
+  transition: border-color 0.2s, background 0.2s, color 0.2s, opacity 0.2s;
 }
-.hero-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg-deep); font-weight: 600; }
-.hero-btn:hover { border-color: var(--accent); }
-.hero-proof {
-  margin-top: 22px;
-  font-family: var(--font-display);
-  font-size: 0.72rem; letter-spacing: 0.28em;
-  color: var(--text-muted);
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700; }
+.btn.primary:hover { opacity: 0.88; }
+.btn.ghost { background: rgba(5, 4, 8, 0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn.wide { display: block; width: 100%; }
+.btn.added { background: #3d7a52; border-color: #3d7a52; color: #eafff2; }
+
+.scroll-hint {
+  position: fixed; bottom: 26px; right: 50%; transform: translateX(50%);
+  z-index: 30;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: var(--mut); font-size: 0.78rem;
+  pointer-events: none;
+  animation: hint-bob 2.8s ease-in-out infinite;
 }
-.scroll-indicator {
-  position: absolute; bottom: 28px; right: 50%; transform: translateX(50%);
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  color: var(--text-muted); font-size: 0.8rem;
-  animation: indicator-bob 2.2s ease-in-out infinite;
-}
-@keyframes indicator-bob {
+@keyframes hint-bob {
   0%, 100% { transform: translateX(50%) translateY(0); }
-  50% { transform: translateX(50%) translateY(8px); }
+  50% { transform: translateX(50%) translateY(5px); }
 }
 
 /* ---------- بوم ---------- */
 .canvas-wrap {
   position: fixed; inset: 0; z-index: 1;
-  background: var(--bg-deep);
+  background: var(--bg);
 }
-/* پنجره‌ی عریض‌تر از فریم ۹:۱۶ → صحنه‌ی عمودی تمام‌ارتفاع وسط:
-   فریم کامل دیده می‌شود (بدون برش ماشین) با لبه‌ی تیز، دو طرف پس‌زمینه‌ی برند */
-@media (min-aspect-ratio: 0.68) {
-  .canvas-wrap {
-    width: min(100vw, 56.25vh);
-    margin-inline: auto;
-    box-shadow: 0 0 90px rgba(0, 0, 0, 0.55);
-  }
+/* وینیت سینمایی ملایم روی بوم (پس‌زمینه‌ی استودیو روشن است) */
+.canvas-wrap::after {
+  content: ""; position: absolute; inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.42);
 }
 #canvas { width: 100%; height: 100%; display: block; }
-#dark-overlay {
-  position: fixed; inset: 0; z-index: 5;
-  background: #07060b; opacity: 0; pointer-events: none;
-}
 
-/* ---------- اسکرول و سکشن‌ها ---------- */
-#scroll-container { position: relative; height: 1400vh; }
+/* ---------- استیج اسکراب و کپشن‌ها ---------- */
+#scrub-stage { position: relative; height: 640vh; z-index: 20; }
 
-.scroll-section {
+.cap {
   position: absolute; right: 0; left: 0;
   transform: translateY(-50%);
-  z-index: 20;
+  text-align: center;
+  padding: 0 6vw;
   visibility: hidden;
-  padding: 0 clamp(20px, 5vw, 64px);
+  text-shadow: 0 2px 26px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.9);
 }
-.scroll-section.is-in { visibility: visible; }
+.cap.is-in { visibility: visible; }
+/* اسکریم نرم پشت کپشن — حس تایتل‌کارت فیلم روی فریم‌های روشن */
+.cap::before {
+  content: ""; position: absolute; inset: -36px -4vw;
+  z-index: -1;             /* .cap ترنسفورم دارد؛ اسکریم داخل همان لایه می‌ماند */
+  background: radial-gradient(ellipse 52% 68% at 50% 50%, rgba(5, 4, 8, 0.5), transparent 72%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+.cap.is-in::before { opacity: 1; }
+.cap-kicker {
+  display: inline-flex; align-items: center; gap: 14px;
+  font-size: 0.7rem;
+  letter-spacing: 0.4em;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+/* خط‌های مویی طلایی دو طرف کیکر — قاب تایتل‌کارت */
+.cap-kicker::before, .cap-kicker::after {
+  content: ""; width: clamp(22px, 4vw, 36px); height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 162, 94, 0.65));
+}
+.cap-kicker::after { background: linear-gradient(90deg, rgba(201, 162, 94, 0.65), transparent); }
+.cap-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(1.7rem, 4.6vw, 3.1rem);
+  line-height: 1.4;
+  color: var(--ink);
+}
+[dir="ltr"] .cap-title { font-family: var(--font-display); font-weight: 500; }
 
-.section-content.align-right { padding-left: 55vw; padding-right: 5vw; }
-.section-content.align-left { padding-right: 55vw; padding-left: 5vw; }
-.car-card.align-left { display: flex; justify-content: flex-start; }
-.car-card.align-right { display: flex; justify-content: flex-end; }
-/* کارت طرح‌ها پایین صفحه می‌نشیند تا ماشین پشت آن پنهان نشود */
-.car-card { transform: translateY(calc(-50% + 27vh)); }
-.section-content .section-inner { max-width: 40vw; }
-.car-card .section-inner { max-width: 420px; width: 100%; }
+/* ---------- کالکشن ---------- */
+.collection {
+  position: relative; z-index: 30;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+  border-top: 1px solid var(--hairline);
+  padding: clamp(72px, 12vh, 120px) clamp(20px, 5vw, 48px);
+}
+.col-head { max-width: 1120px; margin: 0 auto 44px; text-align: center; }
+.col-title {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  line-height: 1.4;
+  margin-top: 14px;
+}
+[dir="ltr"] .col-title { font-family: var(--font-display); font-weight: 500; }
+.col-sub {
+  color: var(--mut); font-size: 0.95rem; line-height: 2;
+  max-width: 56ch; margin: 10px auto 0; font-weight: 300;
+}
 
-.section-label {
-  display: inline-block;
+.cards {
+  max-width: 1120px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+.card {
+  background: rgba(12, 9, 19, 0.6);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), border-color 0.35s ease, box-shadow 0.35s ease;
+}
+.card:hover { transform: translateY(-4px); border-color: rgba(201, 162, 94, 0.55); box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4); }
+.card-media { aspect-ratio: 16 / 10; overflow: hidden; background: var(--bg2); }
+.card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1); }
+/* زوم خیلی نرم تصویر در هاور — لمسی، نه پرشی */
+.card:hover .card-media img { transform: scale(1.035); }
+.card-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.card-name-en {
   font-family: var(--font-display);
-  font-size: 0.72rem; letter-spacing: 0.3em;
-  color: var(--accent); margin-bottom: 14px;
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  color: var(--accent);
 }
-.section-heading {
-  font-family: var(--font-body); font-weight: 700;
-  font-size: clamp(1.5rem, 3.2vw, 2.2rem); line-height: 1.5;
-  color: var(--text-on-dark);
-  margin-bottom: 12px;
+.card-name { font-size: 1.05rem; font-weight: 700; }
+.card-desc { color: var(--mut); font-size: 0.84rem; line-height: 1.9; font-weight: 300; flex: 1; }
+.card-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding-top: 12px; margin-top: 4px;
+  border-top: 1px solid var(--hairline);
 }
-.section-body { color: var(--text-muted); line-height: 2; font-size: clamp(0.9rem, 1.6vw, 1rem); }
-
-/* کارت شیشه‌ای مات طرح‌ها */
-.glass-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  backdrop-filter: blur(18px) saturate(130%);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
-  padding: clamp(22px, 3vw, 34px);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass-card { background: rgba(14, 11, 22, 0.9); backdrop-filter: none; -webkit-backdrop-filter: none; }
-}
-
-.spec-list {
-  list-style: none; margin: 14px 0 4px;
-  display: flex; flex-direction: column; gap: 8px;
-}
-.spec-list li {
-  position: relative; padding-right: 18px;
-  color: var(--text-muted); font-size: 0.9rem;
-}
-.spec-list li::before {
-  content: ""; position: absolute; right: 0; top: 0.62em;
-  width: 7px; height: 7px; border-radius: 2px;
-  background: var(--accent-soft); border: 1px solid var(--accent);
-}
-
-.price-row { display: flex; align-items: baseline; gap: 8px; margin: 18px 0 6px; }
-.price {
+.card-price { display: flex; align-items: baseline; gap: 5px; }
+.card-price strong {
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 3.4vw, 2.3rem);
-  color: var(--accent); letter-spacing: 0.02em;
+  font-size: 1.25rem; font-weight: 600; color: var(--accent);
 }
-.toman { color: var(--text-muted); font-size: 0.9rem; }
-
-.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-.cta-button {
-  min-height: var(--touch-min);
-  padding: 10px 26px; border-radius: 999px;
+.card-price span { color: var(--mut); font-size: 0.75rem; }
+.card-add {
+  min-height: 38px;
+  padding: 8px 18px; border-radius: 999px;
   border: 1px solid var(--accent);
-  background: var(--accent); color: var(--bg-deep);
-  font-family: var(--font-body); font-size: 0.95rem; font-weight: 600;
-  cursor: pointer; text-decoration: none; text-align: center;
-  transition: transform 0.2s, background 0.25s, color 0.25s;
+  background: transparent; color: var(--accent);
+  font-family: var(--font-body); font-size: 0.82rem; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
 }
-.cta-button:hover { transform: translateY(-2px); }
-.cta-button.ghost { background: transparent; color: var(--text-on-dark); border-color: var(--border); }
-.cta-button.ghost:hover { border-color: var(--accent); }
-.cta-button.wide { display: block; width: 100%; }
-.cta-button.added { background: #3d7a52; border-color: #3d7a52; color: #eafff2; }
+.card-add:hover { background: var(--accent); color: var(--bg); box-shadow: 0 6px 18px rgba(201, 162, 94, 0.28); }
+.card-add.added { background: #3d7a52; border-color: #3d7a52; color: #eafff2; }
 
-.scroll-hint {
-  display: block; margin-top: 18px;
-  color: var(--text-muted); font-size: 0.78rem; letter-spacing: 0.05em;
-}
-
-/* آمار پایانی */
-.stats-grid {
-  display: flex; gap: clamp(14px, 3vw, 34px);
-  margin-top: 26px; padding-top: 20px;
-  border-top: 1px solid var(--border);
+/* آمار */
+.stats {
+  max-width: 1120px; margin: 56px auto 0;
+  display: flex; justify-content: center; gap: clamp(28px, 7vw, 84px);
+  padding-top: 36px;
+  border-top: 1px solid var(--hairline);
   flex-wrap: wrap;
+  text-align: center;
 }
-.stat { display: flex; flex-direction: column; gap: 4px; min-width: 84px; }
+.stat { display: flex; flex-direction: column; gap: 4px; min-width: 90px; }
 .stat-number {
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3vw, 2rem); color: var(--accent);
+  font-size: clamp(1.8rem, 3.6vw, 2.4rem);
+  color: var(--accent); font-weight: 500;
+  line-height: 1.1;
 }
-.stat-suffix { color: var(--text-muted); font-size: 0.85rem; }
-.stat-label { color: var(--text-muted); font-size: 0.8rem; }
+.stat-plus { color: var(--accent); font-size: 1rem; }
+.stat-label { color: var(--mut); font-size: 0.8rem; }
+
+/* ---------- فوتر ---------- */
+.site-footer {
+  position: relative; z-index: 30;
+  background: var(--bg2);
+  border-top: 1px solid var(--hairline);
+  text-align: center;
+  padding: 56px clamp(20px, 5vw, 48px) 40px;
+}
+.foot-logo {
+  font-size: 1.05rem; letter-spacing: 0.4em; text-indent: 0.4em;
+  color: var(--ink);
+}
+.foot-line {
+  width: 72px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  margin: 22px auto;
+}
+.foot-tag { color: var(--mut); font-size: 0.9rem; font-weight: 300; }
+.foot-meta {
+  margin-top: 30px;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  color: var(--mut); font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  max-width: 1120px; margin-inline: auto;
+}
+.foot-social { display: flex; gap: 16px; }
+.foot-social a { color: var(--mut); transition: color 0.2s; display: inline-flex; }
+.foot-social a:hover { color: var(--accent); }
 
 /* ---------- سبد خرید ---------- */
 .cart-drawer { position: fixed; inset: 0; z-index: 80; }
 .cart-backdrop {
   position: absolute; inset: 0;
-  background: rgba(7, 6, 11, 0.6);
+  background: rgba(5, 4, 8, 0.65);
   opacity: 0; transition: opacity 0.3s;
 }
 .cart-panel {
   position: absolute; top: 0; bottom: 0; left: 0;
   width: min(400px, 92vw);
-  border-radius: 0;
+  background: rgba(12, 9, 19, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-right: 1px solid var(--hairline);
   transform: translateX(-100%);
   transition: transform 0.38s cubic-bezier(0.32, 0.72, 0.24, 1);
   display: flex; flex-direction: column;
@@ -313,43 +396,49 @@ img { max-width: 100%; display: block; }
 .cart-drawer.open .cart-panel { transform: translateX(0); }
 .cart-head {
   display: flex; align-items: center; justify-content: space-between;
-  padding-bottom: 16px; border-bottom: 1px solid var(--border);
+  padding-bottom: 16px; border-bottom: 1px solid var(--hairline);
 }
-.cart-head h3 { font-family: var(--font-body); font-size: 1.15rem; }
+.cart-head h3 { font-size: 1.1rem; font-weight: 700; }
 .cart-close {
-  background: none; border: 1px solid var(--border); color: var(--text-muted);
+  background: none; border: 1px solid var(--hairline); color: var(--mut);
   width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
   transition: color 0.2s, border-color 0.2s;
 }
-.cart-close:hover { color: var(--text-on-dark); border-color: var(--accent); }
+.cart-close:hover { color: var(--ink); border-color: var(--accent); }
 .cart-items { list-style: none; flex: 1; overflow-y: auto; margin: 12px 0; display: flex; flex-direction: column; gap: 10px; }
 .cart-item {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 12px 14px; border: 1px solid var(--border); border-radius: 14px;
+  padding: 12px 14px; border: 1px solid var(--hairline); border-radius: 12px;
 }
 .cart-item-info { display: flex; flex-direction: column; gap: 3px; }
-.cart-item-name { font-size: 0.92rem; }
-.cart-item-price { color: var(--accent); font-size: 0.82rem; }
+.cart-item-name { font-size: 0.9rem; }
+.cart-item-price { color: var(--accent); font-size: 0.8rem; }
 .cart-item-remove {
-  background: none; border: none; color: var(--text-muted); cursor: pointer;
-  font-size: 0.95rem; padding: 6px;
+  background: none; border: none; color: var(--mut); cursor: pointer;
+  font-size: 0.9rem; padding: 6px;
 }
 .cart-item-remove:hover { color: #d97b7b; }
-.cart-empty { color: var(--text-muted); text-align: center; padding: 30px 0; font-size: 0.9rem; }
-.cart-foot { border-top: 1px solid var(--border); padding-top: 16px; display: flex; flex-direction: column; gap: 14px; }
-.cart-total { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.92rem; }
-.cart-total strong { color: var(--accent); font-family: var(--font-display); }
+.cart-empty { color: var(--mut); text-align: center; padding: 30px 0; font-size: 0.88rem; }
+.cart-foot { border-top: 1px solid var(--hairline); padding-top: 16px; display: flex; flex-direction: column; gap: 14px; }
+.cart-total { display: flex; justify-content: space-between; color: var(--mut); font-size: 0.9rem; }
+.cart-total strong { color: var(--accent); font-family: var(--font-display); font-size: 1.05rem; }
 
 /* ---------- مودال تماس ---------- */
 .contact-modal {
   position: fixed; inset: 0; z-index: 90;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(7, 6, 11, 0.72);
+  background: rgba(5, 4, 8, 0.75);
   padding: 20px;
 }
-.contact-panel { max-width: 420px; width: 100%; text-align: center; }
-.contact-panel h3 { font-size: 1.2rem; margin-bottom: 10px; }
-.contact-panel p { color: var(--text-muted); line-height: 2; font-size: 0.92rem; margin-bottom: 20px; }
+.contact-panel {
+  max-width: 420px; width: 100%; text-align: center;
+  background: rgba(12, 9, 19, 0.95);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  padding: 30px 26px;
+}
+.contact-panel h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; }
+.contact-panel p { color: var(--mut); line-height: 2; font-size: 0.9rem; margin-bottom: 20px; }
 .contact-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
 /* ---------- واتساپ شناور ---------- */
@@ -357,29 +446,25 @@ img { max-width: 100%; display: block; }
   position: fixed; bottom: 22px; left: 22px; z-index: 50;
   width: 48px; height: 48px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: var(--accent); color: var(--bg-deep);
-  box-shadow: 0 10px 30px rgba(196, 162, 101, 0.35);
+  background: var(--accent); color: var(--bg);
+  box-shadow: 0 10px 30px rgba(201, 162, 94, 0.3);
   transition: transform 0.2s;
 }
 .wa-float:hover { transform: translateY(-3px); }
 
 /* ---------- موبایل ---------- */
 @media (max-width: 768px) {
-  #scroll-container { height: 1100vh; }
-  .section-content.align-right, .section-content.align-left { padding: 0 5vw; }
-  .section-content .section-inner { max-width: 100%; }
-  .car-card.align-left, .car-card.align-right { justify-content: center; padding: 0 4vw; }
-  .car-card .section-inner { max-width: 100%; background: rgba(14, 11, 22, 0.72); padding: 18px 20px; }
-  .car-card .section-body { font-size: 0.85rem; line-height: 1.8; }
-  .car-card .spec-list { margin: 10px 0 2px; gap: 5px; }
-  .car-card .spec-list li { font-size: 0.8rem; }
-  .car-card .price-row { margin: 10px 0 2px; }
-  .car-card .scroll-hint { display: none; }
-  .scroll-section { padding: 0 4vw; }
-  .scroll-indicator { bottom: 18px; }
+  #scrub-stage { height: 560vh; }
+  .hero-title { font-size: clamp(2rem, 9vw, 2.8rem); }
+  .cap { bottom: auto; padding: 0 5vw; }
+  .cap-title { font-size: clamp(1.35rem, 6vw, 1.9rem); }
+  .cards { grid-template-columns: 1fr; }
+  .scroll-hint { bottom: 18px; }
   .wa-float { bottom: 16px; left: 16px; width: 44px; height: 44px; }
+  .foot-meta { justify-content: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scroll-indicator, .twin-orbit__dot { animation: none; }
+  .grain, .scroll-hint { animation: none; }
+  .card, .card-media img, .card-add, .cap::before { transition: none; }
 }

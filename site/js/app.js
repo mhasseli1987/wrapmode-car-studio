@@ -1,61 +1,90 @@
-/* WRAPMODE — تک‌کلیپ اسکرولی (۸ طرح، سرعت یکنواخت) */
+/* WRAPMODE — کلیپ ۱۰ ثانیه‌ای استودیو: یک take پیوسته، ۴ فصل + گرید معرفی (v20) */
 (() => {
   "use strict";
 
   // ---------- پیکربندی ----------
-  const FRAME_DIR = "frames1/";
-  const FRAME_COUNT = 305;
+  // کلیپ: 1152×768 (۳:۲)، ۲۴fps، ۲۴۱ فریم — برداری یک‌تکه در استودیو
+  // 0-8 گرید معرفی / 10-54 پرچم‌دار طلایی / 56-76 آنیمه شب / 78-200 ریسینگ ۶۶ (با اکت مجنتا) / 202-240 ساکورا
+  const FRAME_DIR = "frames2/";
+  const FRAME_COUNT = 241;
+  const GRID_HOLD = 2;      // فریم گرید معرفی (هیرو)
 
-  const DESIGNS = [
-    { label: "فول‌بادی — آنیمه ساکورا (سفید)", price: 38000000 },
-    { label: "فول‌بادی — آنیمه شب (مشکی)", price: 42000000 },
-    { label: "فول‌بادی — گرافیتی خیابانی آبی", price: 32000000 },
-    { label: "فول‌بادی — لیوری ریسینگ نارنجی", price: 28000000 },
-    { label: "فول‌بادی — آرت کارتون قرمز", price: 26000000 },
-    { label: "فول‌بادی — آرت کارتون سفید", price: 25000000 },
-    { label: "فول‌بادی — استریپ ریسینگ سفید/نارنجی", price: 24000000 },
-    { label: "فول‌بادی — لیوری طوسی/طلایی (پرچم‌دار)", price: 45000000 },
+  const CHAPTERS = [
+    { from: 2,   to: 54  }, // ۱ پرچم‌دار — ورود با زومِ گریدِ خودِ کلیپ
+    { from: 56,  to: 76  }, // ۲ آنیمه شب
+    { from: 78,  to: 200 }, // ۳ ریسینگ ۶۶
+    { from: 202, to: 240 }, // ۴ ساکورا
   ];
-
-  // سگمنت‌های پایدار هر طرح (بازه‌ی بدون دیپِ کراس‌فید) — ایندکس صفرِ مبنا
-  const SEGMENTS = [
-    { from: 0,   hold: 31  }, // ۱ ساکورا سفید
-    { from: 40,  hold: 66  }, // ۲ آنیمه شب
-    { from: 76,  hold: 103 }, // ۳ گرافیتی آبی
-    { from: 113, hold: 139 }, // ۴ ریسینگ نارنجی
-    { from: 149, hold: 175 }, // ۵ کارتون قرمز
-    { from: 185, hold: 211 }, // ۶ کارتون سفید
-    { from: 221, hold: 264 }, // ۷ استریپ
-    { from: 274, hold: 304 }, // ۸ پرچم‌دار
-  ];
-  const INTRO_END = 0.03;   // سهم کارت معرفی
-  const HOLD_FRAC = 0.38;   // سهم توقف روی فریم آخر + کارت از هر سگمنت
-  const BLEND_FRAC = 0.10;  // محوی ورود به اسکراب هر طرح
-  // فریم‌های ۴۰ تا ۲۱۲ در سورس لترباکس ۷۲۰×۴۰۴ دارند (طرح‌های ۲ تا ۶) → پر کردن بالا/پایین با آینه‌ی تیز
-  const BAND = { lo: 40, hi: 212, y0: 436, y1: 840 };
-
-  function timelineAt(t) {
-    const n = SEGMENTS.length;
-    const span = 1 / n;
-    if (t <= 0) return { idx: 0, blend: 0, blendIdx: 0 };
-    const k = Math.min(n - 1, Math.floor(t / span));
-    const local = (t - k * span) / span;
-    const seg = SEGMENTS[k];
-    const scrubEnd = 1 - HOLD_FRAC;
-    if (local < scrubEnd) {
-      const q = local / scrubEnd;
-      const idx = Math.round(seg.from + q * (seg.hold - seg.from));
-      let blend = 0, blendIdx = 0;
-      if (k > 0 && local < BLEND_FRAC) {
-        blend = 1 - local / BLEND_FRAC;
-        blendIdx = SEGMENTS[k - 1].hold;
-      }
-      return { idx, blend, blendIdx };
-    }
-    return { idx: seg.hold, blend: 0, blendIdx: 0 }; // توقف روی فریم آخر + کارت
-  }
+  // سهم اسکرول هر فصل (جمع = ۱) — ماشین مشکی کوتاه‌تر از بقیه فیلم است، کمی فرصت بیشتر می‌گیرد
+  const CH_WEIGHTS = [0.25, 0.17, 0.34, 0.24];
+  const INTRO_END = 0.05;   // سهم هیروی ثابت (فریم گرید)
 
   const WA_NUMBER = "989304140872";
+
+  // ---------- ۵ طرح کالکشن (به ترتیب فیلم؛ گرافیتی فقط کارت) ----------
+  const DESIGNS = [
+    { en: "GOLD FLAGSHIP", fa: "پرچم‌دار طوسی/طلایی", descFa: "پرچم‌دار کالکشن؛ بدنه‌ی روشن با گرافیک طلایی و مشکی.", descEn: "The collection flagship — pearl body with gold and black graphics.", price: 45000000, img: "img/design-8.webp" },
+    { en: "NIGHT ANIME",   fa: "آنیمه شب",            descFa: "گرافیک آنیمه روی بدنه مشکی؛ فضای تیره و سینمایی.",    descEn: "Anime graphics on black body, after-dark mood.", price: 42000000, img: "img/design-2.webp" },
+    { en: "RACING LIVERY", fa: "لیوری ریسینگ ۶۶",     descFa: "لیوری مسابقه‌ای قرمز/سفید با شماره‌ی ۶۶؛ حس پیست در خیابان.", descEn: "Red/white #66 race livery — track-born energy.", price: 28000000, img: "img/design-4.webp" },
+    { en: "SAKURA WHITE",  fa: "ساکورا سفید",         descFa: "چاپ آنیمه صورتی روی بدنه سفید؛ درخشش نرم زیر نور.",   descEn: "Pink anime print over pearl white body.", price: 38000000, img: "img/design-1.webp" },
+    { en: "STREET GRAFFITI", fa: "گرافیتی خیابانی",   descFa: "آرت گرافیتی رنگی با حال‌وهوای خیابانی.",              descEn: "Colorful street-art graffiti, loud and bold.", price: 32000000, img: "img/design-3.webp" },
+  ];
+
+  // ---------- بیلینگوال ----------
+  const I18N = {
+    fa: {
+      "nav.designs": "کالکشن", "nav.contact": "تماس", "nav.cart": "سبد",
+      "hero.kicker": "CAR WRAP STUDIO",
+      "hero.title": "کالکشن رپ. یک اسکرول.",
+      "hero.sub": "فویل کست اورجینال، چاپ اختصاصی و نصب حرفه‌ای — پنج طرح فول‌بادی در یک روایت سینمایی.",
+      "hero.cta1": "مشاهده کالکشن", "hero.cta2": "مشاوره واتساپ",
+      "scroll": "اسکرول کنید",
+      "cap1.title": "پرچم‌دار — طلاییِ کالکشن",
+      "cap2.title": "آنیمه شب — پس از تاریکی",
+      "cap3.title": "لیوری ریسینگ — زاده‌ی پیست",
+      "cap4.title": "ساکورا — سفیدِ بی‌آلایش",
+      "col.kicker": "THE COLLECTION — 05",
+      "col.title": "پنج طرح منتخب فول‌بادی",
+      "col.sub": "قیمت تمام‌شده با چاپ و اجرای حرفه‌ای — انتخاب کنید و سفارش را در واتساپ نهایی کنید.",
+      "stat1": "پروژه اجرا شده", "stat2": "سال سابقه تخصصی", "stat3": "فویل اورجینال",
+      "foot.tag": "رپ کن. بران. نگاه‌ها را بچسبان.",
+      "cart.title": "سبد خرید", "cart.empty": "سبد خرید خالی است.", "cart.total": "جمع کل",
+      "cart.order": "ثبت سفارش در واتساپ",
+      "contact.title": "تماس با ورپ‌مود",
+      "contact.body": "برای مشاوره، قیمت دقیق و رزرو نوبت از واتساپ در ارتباط باشید.",
+      "contact.cta": "گفتگو در واتساپ", "contact.close": "بستن",
+      _add: "افزودن", _added: "به سبد اضافه شد ✓", _toman: "تومان", _remove: "حذف",
+    },
+    en: {
+      "nav.designs": "Collection", "nav.contact": "Contact", "nav.cart": "Cart",
+      "hero.kicker": "CAR WRAP STUDIO",
+      "hero.title": "The wrap collection. One scroll.",
+      "hero.sub": "Original cast vinyl, custom prints and professional installation — five full-body designs in one cinematic scroll.",
+      "hero.cta1": "View the collection", "hero.cta2": "WhatsApp consultation",
+      "scroll": "Scroll",
+      "cap1.title": "The flagship — gold standard",
+      "cap2.title": "Night anime — after dark",
+      "cap3.title": "Racing livery — track born",
+      "cap4.title": "Sakura — purity in white",
+      "col.kicker": "THE COLLECTION — 05",
+      "col.title": "Five full-body designs",
+      "col.sub": "Final price including print and professional installation — pick one and order on WhatsApp.",
+      "stat1": "Projects delivered", "stat2": "Years of craft", "stat3": "Original vinyl",
+      "foot.tag": "Wrap. Drive. Turn heads.",
+      "cart.title": "Your cart", "cart.empty": "Your cart is empty.", "cart.total": "Total",
+      "cart.order": "Checkout on WhatsApp",
+      "contact.title": "Contact Wrapmode",
+      "contact.body": "Reach us on WhatsApp for consultation, exact pricing and booking.",
+      "contact.cta": "Chat on WhatsApp", "contact.close": "Close",
+      _add: "Add", _added: "Added ✓", _toman: "Toman", _remove: "Remove",
+    },
+  };
+
+  let lang = "fa";
+  try { if (localStorage.getItem("wrapmode-lang") === "en") lang = "en"; } catch (e) {}
+  const t = (k) => (I18N[lang][k] !== undefined ? I18N[lang][k] : I18N.fa[k] || k);
+  const faNum = (n) => n.toLocaleString(lang === "fa" ? "fa-IR" : "en-US");
+
   // ?nomotion — حالت تست: بدون lenis تا اسکرول برنامه‌ای دقیق باشد
   const prefersReducedMotion =
     window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
@@ -64,22 +93,22 @@
   const isMobile = () => mobileMQ.matches;
 
   const loader = document.getElementById("loader");
+  const loaderFill = document.getElementById("loader-fill");
   const loaderPercent = document.getElementById("loader-percent");
   const canvas = document.getElementById("canvas");
   const canvasWrap = document.getElementById("canvas-wrap");
-  const scrollContainer = document.getElementById("scroll-container");
-  const heroSection = document.querySelector(".hero-standalone");
-  const overlay = document.getElementById("dark-overlay");
+  const stage = document.getElementById("scrub-stage");
+  const heroCopy = document.querySelector(".hero-copy");
+  const scrollHint = document.getElementById("scroll-hint");
+  const header = document.getElementById("site-header");
   const ctx = canvas.getContext("2d", { alpha: false });
-
-  const faNum = (n) => n.toLocaleString("fa-IR");
 
   // ---------- اسکرول نرم ----------
   let lenis = prefersReducedMotion
     ? null
     : new Lenis({
         duration: 1.35,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        easing: (x) => Math.min(1, 1.001 - Math.pow(2, -10 * x)),
         smoothWheel: true,
         wheelMultiplier: isMobile() ? 0.55 : 0.42,
         touchMultiplier: 1.6,
@@ -92,6 +121,7 @@
 
   function updateLoader() {
     const p = Math.round((loaded / FRAME_COUNT) * 100);
+    loaderFill.style.width = p + "%";
     loaderPercent.textContent = faNum(p) + "٪";
   }
 
@@ -109,15 +139,11 @@
   let loaderHidden = false;
 
   async function preload() {
-    // فاز ۱: شروع کلیپ برای اولین رنگ
     const firstJobs = [];
     for (let i = 0; i < READY_AT; i++) firstJobs.push(loadOne(i));
     await Promise.all(firstJobs);
-
     hideLoader();
-    drawFrame(0);
-
-    // فاز ۲: بقیه دسته‌ای
+    drawFrame(GRID_HOLD);
     const batch = isMobile() ? 10 : 20;
     for (let start = READY_AT; start < FRAME_COUNT; start += batch) {
       const end = Math.min(start + batch, FRAME_COUNT);
@@ -164,91 +190,131 @@
       if (frames[i - d] && i - d >= 0) return i - d;
       if (frames[i + d] && i + d < FRAME_COUNT) return i + d;
     }
-    return 0;
+    return GRID_HOLD;
   }
 
-  function drawImageCover(i) {
+  // زیرلایه‌ی بلور ارزان: همان فریم در بوم ۴۸×۳۲ و بزرگ‌نمایی cover
+  const tiny = document.createElement("canvas");
+  tiny.width = 48; tiny.height = 32;
+  const tinyCtx = tiny.getContext("2d");
+
+  function drawFrame(i) {
+    if (!canvas.width) resizeCanvas();
     const resolved = frames[i] ? i : nearestLoaded(i);
     const img = frames[resolved];
     if (!img) return;
     const cw = canvas.width, ch = canvas.height;
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
+    const cover = Math.max(cw / iw, ch / ih);
+    const contain = Math.min(cw / iw, ch / ih);
 
-    // سگمنت لترباکس: باند اصلی تمام‌پهنا (کمی بالاتر از مرکز تا جا برای کارت باشد)
-    // + بالا/پایین با بازتاب تیز خود صحنه و محو نرم (بدون بلور، بدون نوار سیاه)
-    if (resolved >= BAND.lo && resolved <= BAND.hi) {
-      const bh = BAND.y1 - BAND.y0;
-      const s = cw / iw;
-      const dh = bh * s;
-      const y0 = Math.round((ch - dh) * 0.4);
-      ctx.drawImage(img, 0, BAND.y0, iw, bh, 0, y0, cw, dh);
-      drawMirror(resolved, img, -1, y0, y0, cw);
-      drawMirror(resolved, img, 1, y0 + dh, ch - y0 - dh, cw);
-      return;
-    }
-
-    // کاور واقعی: پر شدن کامل از هر ۴ طرف با لبه‌ی تیز
-    const scale = Math.max(cw / iw, ch / ih);
-    const dw = iw * scale, dh = ih * scale;
-    const dx = (cw - dw) / 2, dy = (ch - dh) / 2;
-    ctx.drawImage(img, dx, dy, dw, dh);
-  }
-
-  // بازتاب تیز از لبه‌ی باند به بیرون؛ بالا فقط نوار پس‌زمینه (تا ماشین وارونه دیده نشود)،
-  // پایین فقط ناحیه‌ی کف (مثل انعکاس زیر ماشین) — باقیمانده با محو نرمِ رنگ لبه پر می‌شود
-  const mirrorEdgeCache = new Map();
-
-  function drawMirror(idx, img, dir, seamY, avail, cw) {
-    if (avail <= 1) return;
-    const bh = BAND.y1 - BAND.y0;
-    const iw = img.naturalWidth || img.width;
-    const s = cw / iw;
-    const maxSrc = Math.round(bh * (dir < 0 ? 0.19 : 0.32));
-    const srcH = Math.min(maxSrc, Math.ceil(avail / s));
-    const H = srcH * s;
-    const sy = dir < 0 ? BAND.y0 : BAND.y1 - srcH;
-    ctx.save();
-    ctx.translate(0, dir < 0 ? seamY : seamY + H);
-    ctx.scale(1, -1);
-    ctx.drawImage(img, 0, sy, iw, srcH, 0, 0, cw, H);
-    ctx.restore();
-
-    const drawn = Math.min(H, avail);
-    if (drawn >= avail - 1) return;
-    // محو نرم از رنگ ردیف انتهایی بازتاب به تیره‌تر — ادامه‌ی طبیعی فضا
-    const key = idx + ":" + dir;
-    let rgb = mirrorEdgeCache.get(key);
-    if (!rgb) {
-      try {
-        const t = document.createElement("canvas");
-        t.width = 1; t.height = 1;
-        const tcx = t.getContext("2d");
-        tcx.drawImage(img, 0, dir < 0 ? BAND.y0 + srcH : sy, iw, 1, 0, 0, 1, 1);
-        rgb = [...tcx.getImageData(0, 0, 1, 1).data.slice(0, 3)];
-      } catch (e) { rgb = [10, 8, 16]; }
-      mirrorEdgeCache.set(key, rgb);
-    }
-    const g0 = ctx.createLinearGradient(0, dir < 0 ? seamY - drawn : seamY + drawn, 0, dir < 0 ? seamY - avail : seamY + avail);
-    g0.addColorStop(0, `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`);
-    g0.addColorStop(1, `rgb(${(rgb[0] * 0.3) | 0},${(rgb[1] * 0.3) | 0},${(rgb[2] * 0.3) | 0})`);
-    ctx.fillStyle = g0;
-    ctx.fillRect(0, dir < 0 ? seamY - avail : seamY + drawn, cw, avail - drawn);
-  }
-
-  function drawFrame(i, blendIdx, blend) {
-    if (!canvas.width) resizeCanvas();
-    ctx.fillStyle = bgTint;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    drawImageCover(i);
-    if (blend > 0.01) {
-      ctx.globalAlpha = blend;
-      drawImageCover(blendIdx);
-      ctx.globalAlpha = 1;
+    if (cw >= ch || contain >= cover * 0.985) {
+      // منظره‌ی افقی (یا نزدیک به نسبت خود کلیپ): کاور تمام‌صفحه، لبه تیز
+      const dw = iw * cover, dh = ih * cover;
+      ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+    } else {
+      // پرتره: زیرلایه‌ی محو هم‌رنگ صحنه + تصویر وسط با بزرگ‌نمایی ملایم
+      // (۱.۱۵ برابرِ contain ≈ حداکثر ۷٪ برش از هر طرف — ماشین هرگز کلیپ نمی‌شود)
+      tinyCtx.drawImage(img, 0, 0, 48, 32);
+      const c = Math.max(cw / 48, ch / 32);
+      const bw = 48 * c, bh = 32 * c;
+      ctx.drawImage(tiny, (cw - bw) / 2, (ch - bh) / 2, bw, bh);
+      const scale = contain * 1.15;
+      const dw = iw * scale, dh = ih * scale;
+      ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
     }
   }
 
-  // ---------- هموارسازی فریم (رندر پیوسته) ----------
+  // ---------- تایم‌لاین: یک take پیوسته، ۴ فصل ----------
+  function timelineAt(x) {
+    if (x <= INTRO_END) return { idx: GRID_HOLD };
+    const t = Math.min(1, (x - INTRO_END) / (1 - INTRO_END));
+    let acc = 0;
+    for (let k = 0; k < CHAPTERS.length; k++) {
+      const w = CH_WEIGHTS[k];
+      if (t <= acc + w || k === CHAPTERS.length - 1) {
+        const local = Math.min(1, Math.max(0, (t - acc) / w));
+        const c = CHAPTERS[k];
+        return { idx: Math.round(c.from + local * (c.to - c.from)), cap: k, local };
+      }
+      acc += w;
+    }
+    return { idx: CHAPTERS[CHAPTERS.length - 1].to, cap: CHAPTERS.length - 1, local: 1 };
+  }
+
+  // ---------- کپشن‌ها ----------
+  let capDrivers = [];
+  let scrubLen = 1;
+
+  function measureStage() {
+    scrubLen = Math.max(1, stage.offsetHeight - window.innerHeight);
+  }
+
+  function chapterRanges() {
+    const ranges = [];
+    let acc = 0;
+    for (const w of CH_WEIGHTS) {
+      ranges.push([INTRO_END + acc * (1 - INTRO_END), INTRO_END + (acc + w) * (1 - INTRO_END)]);
+      acc += w;
+    }
+    return ranges;
+  }
+
+  function positionCaptions() {
+    measureStage();
+    const ranges = chapterRanges();
+    // روی موبایل کپشن کمی پایین‌تر می‌نشیند تا روی کابین ماشین نیفتد
+    const drop = isMobile() ? window.innerHeight * 0.19 : 0;
+    capDrivers.forEach((d, k) => {
+      const [s, e] = ranges[k];
+      const enter = s + (e - s) * 0.16;
+      const isLast = k === CHAPTERS.length - 1;
+      const leave = isLast ? 1.0 : s + (e - s) * 0.84;
+      const mid = (enter + leave) / 2;
+      d.el.style.top = `${mid * scrubLen + window.innerHeight / 2 + drop}px`;
+      d.enter = enter;
+      d.leave = leave;
+    });
+  }
+
+  function setupCaptions() {
+    capDrivers = [...stage.querySelectorAll(".cap")].map((el) => {
+      const kids = el.querySelectorAll(".cap-kicker, .cap-title");
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo(kids, { opacity: 0, y: 12 }, { opacity: 1, y: 0, stagger: 0.08, duration: 0.5, ease: "power2.out" });
+      return { el, tl, enter: 0, leave: 1 };
+    });
+    positionCaptions();
+  }
+
+  function syncCaptions(x) {
+    capDrivers.forEach((d) => {
+      const span = Math.max(d.leave - d.enter, 0.001);
+      if (x >= d.enter && x <= d.leave) {
+        d.el.classList.add("is-in");
+        d.tl.progress(Math.min(1, ((x - d.enter) / span) * 4));
+      } else if (x < d.enter) {
+        d.el.classList.remove("is-in");
+        d.tl.progress(0);
+      } else {
+        d.el.classList.remove("is-in");
+        d.tl.progress(Math.max(0, 1 - (x - d.leave) / 0.012));
+      }
+    });
+  }
+
+  // ---------- هیرو / هدر ----------
+  function syncHero(x) {
+    const fade = Math.max(0, 1 - x * 18);
+    heroCopy.style.opacity = String(fade);
+    heroCopy.style.pointerEvents = fade < 0.2 ? "none" : "";
+    heroCopy.querySelectorAll(".btn").forEach((b) => { b.style.pointerEvents = fade < 0.2 ? "none" : "auto"; });
+    scrollHint.style.opacity = String(fade);
+    header.classList.toggle("scrolled", window.scrollY > 40);
+  }
+
+  // ---------- حلقه‌ی رندر ----------
   let targetQ = 0;
   let smoothQ = 0;
   const decodeSet = new WeakSet();
@@ -266,14 +332,19 @@
   }
 
   function render() {
-    const { idx, blend, blendIdx } = timelineAt(smoothQ); // اسکراب یکنواخت → توقف روی فریم آخر
+    const { idx } = timelineAt(smoothQ);
     sampleBg(idx % 20 === 0 ? idx : -1);
-    drawFrame(idx, blendIdx, blend);
+    drawFrame(idx);
+    // پرده‌ی تیره‌ی هیرو: فریم گرید عقب می‌نشیند تا کپی بخواند؛ با شروع اسکرول کنار می‌رود
+    const veil = 0.44 * Math.max(0, 1 - smoothQ / (INTRO_END * 0.85));
+    if (veil > 0.005) {
+      ctx.fillStyle = `rgba(5,4,8,${veil.toFixed(3)})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
     prefetchAround(idx);
   }
 
   let lastP = -1;
-
   let lastStepAt = 0;
 
   function startRenderLoop() {
@@ -282,19 +353,16 @@
       lastStepAt = performance.now();
       if (lenis) {
         try { lenis.raf(timeMs); }
-        catch (e) { lenis = null; } // یک خطای lenis نباید کل رندر را بکشد
+        catch (e) { lenis = null; }
       }
-      const maxS = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      const p = Math.min(1, Math.max(0, window.scrollY / maxS));
-      if (Math.abs(p - lastP) > 0.000004) {
-        lastP = p;
+      const x = Math.min(1, Math.max(0, window.scrollY / scrubLen));
+      if (Math.abs(x - lastP) > 0.000004) {
+        lastP = x;
         try {
-          syncHero(p);
-          syncOverlay();
-          syncSections(p);
-          syncCounters(p);
-          targetQ = Math.min(1, Math.max(0, (p - INTRO_END) / (1 - INTRO_END)));
-        } catch (e) { /* سکشن‌ها هرگز نباید رندر را متوقف کنند */ }
+          syncHero(x);
+          syncCaptions(x);
+          targetQ = x;
+        } catch (e) { /* هیچ‌وقت رندر را نکشد */ }
       }
       const ease = isMobile() ? 0.22 : 0.16;
       const d = targetQ - smoothQ;
@@ -304,126 +372,78 @@
       }
     };
     gsap.ticker.add((time) => { step(time * 1000); });
-    // اگر rAF کند یا متوقف شود (وب‌ویو throttled)، تیک جایگزین زمان‌محور خودش قدم می‌زند
+    // فال‌بک زمان‌محور برای وب‌ویوهای کند
     setInterval(() => {
       if (performance.now() - lastStepAt > 100) step(performance.now());
     }, 33);
   }
 
-  // ---------- سکشن‌ها ----------
-  function positionSections() {
-    // هدف: وقتی p = وسط زون است، مرکز سکشن دقیقاً وسط ویوپورت باشد
-    const maxS = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-    const cTop = scrollContainer.offsetTop;
-    document.querySelectorAll(".scroll-section").forEach((section) => {
-      const mid = (parseFloat(section.dataset.enter) + parseFloat(section.dataset.leave)) / 200;
-      section.style.top = `${mid * maxS + window.innerHeight / 2 - cTop}px`;
-    });
-  }
-
-  function setupSectionDrivers() {
-    window._sectionDrivers = [];
-    document.querySelectorAll(".scroll-section").forEach((section) => {
-      const persist = section.dataset.persist === "true";
-      const enter = parseFloat(section.dataset.enter) / 100;
-      const leave = parseFloat(section.dataset.leave) / 100;
-      const children = section.querySelectorAll(
-        ".section-label, .section-heading, .section-body, .spec-list li, .price-row, .cta-row, .scroll-hint, .stat"
-      );
-
-      gsap.set(children, { clearProps: "all" });
-      const tl = gsap.timeline({ paused: true });
-      // کارت کاملاً ثابت می‌ماند — فقط محو شدن، بدون حرکت
-      tl.fromTo(
-        children,
-        { opacity: 0 },
-        { opacity: 1, stagger: 0.06, duration: 0.4, ease: "power1.out" }
-      );
-
-      window._sectionDrivers.push({ section, enter, leave, persist, tl, maxSeen: 0 });
-    });
-  }
-
-  function syncSections(p) {
-    window._sectionDrivers.forEach((d) => {
-      const span = Math.max(d.leave - d.enter, 0.001);
-      let local = (p - d.enter) / span;
-      if (local < 0) local = 0;
-      if (local > 1) local = 1;
-
-      if (d.persist) {
-        d.maxSeen = Math.max(d.maxSeen, local);
-        d.tl.progress(d.maxSeen);
-        if (d.maxSeen > 0.02) d.section.classList.add("is-in");
-      } else if (p >= d.enter && p <= d.leave) {
-        d.section.classList.add("is-in");
-        d.tl.progress(Math.min(1, local * 4)); // سریع ظاهر می‌شود و تا آخر زون کاملاً ثابت می‌ماند
-      } else if (p < d.enter) {
-        d.section.classList.remove("is-in");
-        d.tl.progress(0);
-      } else {
-        d.section.classList.remove("is-in");
-        d.tl.progress(Math.max(0, 1 - (p - d.leave) / 0.008));
-      }
-    });
-  }
-
   // ---------- شمارنده‌ها ----------
-  function setupCounters() {
-    document.querySelectorAll(".stat-number").forEach((el) => {
-      const target = parseFloat(el.dataset.value);
-      const dec = parseInt(el.dataset.decimals || "0", 10);
-      const obj = { v: 0 };
-      const fmt = (v) => faNum(dec ? v.toFixed(dec) : Math.round(v));
-      el.textContent = fmt(0);
-      const driver = { el, obj, target, fmt, played: false };
-      el._counter = driver;
-    });
-  }
-
-  function syncCounters(p) {
-    document.querySelectorAll(".stat-number").forEach((el) => {
-      const c = el._counter;
-      if (!c) return;
-      if (p > 0.93 && !c.played) {
-        c.played = true;
-        gsap.to(c.obj, {
-          v: c.target,
-          duration: 2,
-          ease: "power1.out",
-          onUpdate: () => { c.el.textContent = c.fmt(c.obj.v); },
+  function initCounters() {
+    const stats = document.getElementById("stats");
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        io.disconnect();
+        stats.querySelectorAll(".stat-number").forEach((el) => {
+          const target = parseFloat(el.dataset.value);
+          const obj = { v: 0 };
+          gsap.to(obj, {
+            v: target, duration: 2, ease: "power1.out",
+            onUpdate: () => { el.textContent = faNum(Math.round(obj.v)); },
+            onComplete: () => { el.dataset.done = "1"; },
+          });
         });
-      }
-    });
-  }
-
-  // ---------- هیرو / اورلی ----------
-  function syncHero(p) {
-    const heroFade = Math.max(0, 1 - p * 33); // تا شروع اسکرولِ طرح ۱ محو می‌شود
-    heroSection.style.opacity = String(heroFade);
-    heroSection.style.pointerEvents = p > 0.04 ? "none" : "auto";
-    canvasWrap.style.opacity = "1";
-  }
-
-  function syncOverlay() { overlay.style.opacity = "0"; }
-
-  // ---------- ناوبری ----------
-  function initNavScroll() {
-    document.querySelectorAll('a[href^="#"]').forEach((link) => {
-      link.addEventListener("click", (e) => {
-        const id = link.getAttribute("href").slice(1);
-        if (!id || id === "top" || link.target === "_blank") return;
-        if (link.id === "nav-contact-btn") return;
-        e.preventDefault();
-        const target = document.getElementById(id);
-        if (!target) return;
-        const enter = parseFloat(target.dataset.enter || "0") / 100;
-        const leave = parseFloat(target.dataset.leave || "100") / 100;
-        const pr = enter + (leave - enter) * 0.28;
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-        if (lenis) lenis.scrollTo(pr * maxScroll, { duration: 1.2 });
-        else window.scrollTo({ top: pr * maxScroll, behavior: "smooth" });
       });
+    }, { threshold: 0.4 });
+    io.observe(stats);
+  }
+
+  // ---------- کالکشن ----------
+  function renderCards() {
+    const wrap = document.getElementById("cards");
+    wrap.innerHTML = "";
+    DESIGNS.forEach((d, i) => {
+      const card = document.createElement("article");
+      card.className = "card";
+      const media = document.createElement("div");
+      media.className = "card-media";
+      const img = document.createElement("img");
+      img.src = d.img;
+      img.alt = lang === "fa" ? d.fa : d.en;
+      img.loading = "lazy";
+      media.appendChild(img);
+      const body = document.createElement("div");
+      body.className = "card-body";
+      const en = document.createElement("span");
+      en.className = "card-name-en";
+      en.dir = "ltr";
+      en.textContent = `DESIGN 0${i + 1} — ${d.en}`;
+      const name = document.createElement("h3");
+      name.className = "card-name";
+      name.textContent = lang === "fa" ? d.fa : d.en;
+      const desc = document.createElement("p");
+      desc.className = "card-desc";
+      desc.textContent = lang === "fa" ? d.descFa : d.descEn;
+      const foot = document.createElement("div");
+      foot.className = "card-foot";
+      const price = document.createElement("div");
+      price.className = "card-price";
+      const strong = document.createElement("strong");
+      strong.textContent = faNum(d.price);
+      const unit = document.createElement("span");
+      unit.textContent = t("_toman");
+      price.append(strong, unit);
+      const add = document.createElement("button");
+      add.type = "button";
+      add.className = "card-add";
+      add.dataset.design = String(i);
+      add.textContent = t("_add");
+      add.addEventListener("click", () => addToCart(add, i));
+      foot.append(price, add);
+      body.append(en, name, desc, foot);
+      card.append(media, body);
+      wrap.appendChild(card);
     });
   }
 
@@ -455,33 +475,51 @@
       li.className = "cart-item";
       const info = document.createElement("div");
       info.className = "cart-item-info";
+      const d = DESIGNS[item.car];
       const name = document.createElement("span");
       name.className = "cart-item-name";
-      name.textContent = `${DESIGNS[item.car].label} × ${faNum(item.qty)}`;
+      name.textContent = `${lang === "fa" ? d.fa : d.en} × ${faNum(item.qty)}`;
       const price = document.createElement("span");
       price.className = "cart-item-price";
-      price.textContent = faNum(DESIGNS[item.car].price * item.qty) + " تومان";
+      price.textContent = `${faNum(d.price * item.qty)} ${t("_toman")}`;
       info.append(name, price);
       const rm = document.createElement("button");
       rm.type = "button";
       rm.className = "cart-item-remove";
-      rm.textContent = "حذف";
-      rm.setAttribute("aria-label", "حذف از سبد");
+      rm.textContent = t("_remove");
+      rm.setAttribute("aria-label", t("_remove"));
       rm.addEventListener("click", () => { cartState.splice(idx, 1); saveCart(); renderCart(); });
       li.append(info, rm);
       cartItemsEl.append(li);
     });
 
     const total = cartState.reduce((s, it) => s + DESIGNS[it.car].price * it.qty, 0);
-    cartTotalEl.textContent = faNum(total) + " تومان";
+    cartTotalEl.textContent = `${faNum(total)} ${t("_toman")}`;
 
-    const lines = cartState.map((it) =>
-      `• ${DESIGNS[it.car].label} × ${faNum(it.qty)} — ${faNum(DESIGNS[it.car].price * it.qty)} تومان`
-    );
+    // پیام واتساپ همیشه فارسی می‌ماند (گیرنده‌ی فروشگاه)
+    const lines = cartState.map((it) => {
+      const d = DESIGNS[it.car];
+      return `• ${d.fa} × ${it.qty.toLocaleString("fa-IR")} — ${(d.price * it.qty).toLocaleString("fa-IR")} تومان`;
+    });
+    const totalFa = total.toLocaleString("fa-IR");
     const msg = lines.length
-      ? `سلام، سفارش از سایت ورپ‌مود:\n${lines.join("\n")}\nجمع: ${faNum(total)} تومان`
+      ? `سلام، سفارش از سایت ورپ‌مود:\n${lines.join("\n")}\nجمع: ${totalFa} تومان`
       : "سلام، می‌خواهم درباره رپ خودرو مشاوره بگیرم.";
     cartOrderBtn.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+  }
+
+  function addToCart(btn, car) {
+    const existing = cartState.find((it) => it.car === car);
+    if (existing) existing.qty += 1;
+    else cartState.push({ car, qty: 1 });
+    saveCart();
+    renderCart();
+    btn.textContent = t("_added");
+    btn.classList.add("added");
+    setTimeout(() => {
+      btn.textContent = t("_add");
+      btn.classList.remove("added");
+    }, 1600);
   }
 
   function openCart() {
@@ -499,23 +537,6 @@
     document.getElementById("cart-open-btn").addEventListener("click", openCart);
     document.getElementById("cart-close-btn").addEventListener("click", closeCart);
     document.getElementById("cart-backdrop").addEventListener("click", closeCart);
-    document.getElementById("final-cart-btn").addEventListener("click", openCart);
-
-    document.querySelectorAll(".add-cart").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const car = parseInt(btn.dataset.design, 10);
-        const existing = cartState.find((it) => it.car === car);
-        if (existing) existing.qty += 1;
-        else cartState.push({ car, qty: 1 });
-        saveCart();
-        renderCart();
-        const original = btn.textContent;
-        btn.textContent = "به سبد اضافه شد ✓";
-        btn.classList.add("added");
-        setTimeout(() => { btn.textContent = original; btn.classList.remove("added"); }, 1600);
-      });
-    });
-    renderCart();
   }
 
   // ---------- تماس ----------
@@ -526,32 +547,102 @@
     const waBtn = document.getElementById("contact-whatsapp-btn");
     const heroWa = document.getElementById("hero-wa-btn");
     const waFloat = document.getElementById("wa-float");
+    const footWa = document.getElementById("foot-wa");
     const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent("سلام، از سایت ورپ‌مود پیام می‌دهم.")}`;
     if (waBtn) waBtn.href = waUrl;
     if (heroWa) heroWa.href = waUrl;
     if (waFloat) waFloat.href = waUrl;
+    if (footWa) footWa.href = waUrl;
     if (openBtn) openBtn.addEventListener("click", (e) => { e.preventDefault(); modal.hidden = false; });
     if (closeBtn) closeBtn.addEventListener("click", () => { modal.hidden = true; });
     if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
   }
 
+  // ---------- زبان ----------
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const v = t(el.dataset.i18n);
+      if (v) el.textContent = v;
+    });
+    document.getElementById("lang-toggle").textContent = lang === "fa" ? "EN" : "فا";
+    document.title = lang === "fa" ? "WRAPMODE — استودیو رپ خودرو" : "WRAPMODE — Car Wrap Studio";
+    document.querySelectorAll(".stat-number").forEach((el) => {
+      if (el.dataset.done) el.textContent = faNum(parseFloat(el.dataset.value));
+    });
+    renderCards();
+    renderCart();
+  }
+
+  function initLang() {
+    document.getElementById("lang-toggle").addEventListener("click", () => {
+      lang = lang === "fa" ? "en" : "fa";
+      try { localStorage.setItem("wrapmode-lang", lang); } catch (e) {}
+      applyLang();
+    });
+  }
+
+  // ---------- ناوبری ----------
+  function initNavScroll() {
+    document.querySelectorAll('a[href="#collection"]').forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const el = document.getElementById("collection");
+        if (lenis) lenis.scrollTo(el, { duration: 1.4, offset: -8 });
+        else el.scrollIntoView({ behavior: "smooth" });
+      });
+    });
+    document.querySelectorAll('a[href="#top"]').forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (lenis) lenis.scrollTo(0, { duration: 1.4 });
+        else window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+  }
+
+  // ---------- کرسر سفارشی ----------
+  function initCursor() {
+    if (prefersReducedMotion || !window.matchMedia("(pointer: fine)").matches) return;
+    const dot = document.getElementById("cursor");
+    let mx = -100, my = -100, cx = -100, cy = -100, seen = false;
+    window.addEventListener("mousemove", (e) => {
+      mx = e.clientX; my = e.clientY;
+      if (!seen) { seen = true; cx = mx; cy = my; dot.style.opacity = "1"; }
+    });
+    document.addEventListener("mouseover", (e) => {
+      const hot = e.target.closest("a, button");
+      dot.style.transform = `translate(-50%, -50%) scale(${hot ? 2.4 : 1})`;
+      dot.style.transition = "transform 0.18s ease";
+    });
+    gsap.ticker.add(() => {
+      cx += (mx - cx) * 0.22;
+      cy += (my - cy) * 0.22;
+      dot.style.left = cx + "px";
+      dot.style.top = cy + "px";
+    });
+  }
+
   // ---------- راه‌اندازی ----------
   function boot() {
+    applyLang();
     resizeCanvas();
     window.addEventListener("resize", () => {
       resizeCanvas();
-      positionSections();
+      positionCaptions();
       render();
     });
-    setupSectionDrivers();
-    setupCounters();
-    positionSections();
+    setupCaptions();
+    initCounters();
     startRenderLoop();
     initNavScroll();
     initCart();
     initContact();
+    initLang();
+    initCursor();
     preload();
-    sampleBg(0);
+    sampleBg(GRID_HOLD);
   }
 
   if (document.readyState === "loading") {
