@@ -1,4 +1,4 @@
-/* WRAPMODE — کلیپ استودیو ۳:۲ تمام‌صفحه، یک take پیوسته (v13 — پالیش ظاهری: قاب کپشن، لودر، هاور کارت، هدر، اسکریم هیرو) */
+/* WRAPMODE — کلیپ استودیو ۳:۲ تمام‌صفحه، یک take پیوسته (v14 — نوار پیشرفت، دریفت کپشن) */
 :root {
   --bg: #050408;
   --bg2: #0c0913;          /* بنفش خیلی تیره برند */
@@ -34,6 +34,16 @@ img { max-width: 100%; display: block; }
   letter-spacing: 0.35em; text-indent: 0.35em;
   color: var(--accent);
   font-weight: 500;
+}
+
+/* ---------- نوار پیشرفت اسکرول ---------- */
+.progress {
+  position: fixed; top: 0; right: 0; left: 0; z-index: 70;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(201, 162, 94, 0.25), var(--accent));
+  transform: scaleX(0);
+  transform-origin: right;
+  pointer-events: none;
 }
 
 /* ---------- گرین فیلم ---------- */
@@ -214,7 +224,7 @@ img { max-width: 100%; display: block; }
 
 .cap {
   position: absolute; right: 0; left: 0;
-  transform: translateY(-50%);
+  transform: translateY(calc(-50% + var(--drift, 0px)));
   text-align: center;
   padding: 0 6vw;
   visibility: hidden;

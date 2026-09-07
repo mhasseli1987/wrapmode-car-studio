@@ -1,4 +1,4 @@
-/* WRAPMODE — کلیپ ۱۰ ثانیه‌ای استودیو: یک take پیوسته، ۴ فصل + گرید معرفی (v20) */
+/* WRAPMODE — کلیپ ۱۰ ثانیه‌ای استودیو: یک take پیوسته، ۴ فصل + گرید معرفی (v22 — بلند بین‌فریمی، زوم سرعت‌محور، نوار پیشرفت، ریویل کالکشن) */
 (() => {
   "use strict";
 
@@ -199,20 +199,17 @@
   tiny.width = 48; tiny.height = 32;
   const tinyCtx = tiny.getContext("2d");
 
-  function drawFrame(i) {
-    if (!canvas.width) resizeCanvas();
-    const resolved = frames[i] ? i : nearestLoaded(i);
-    const img = frames[resolved];
-    if (!img) return;
+  function drawOne(img, zoom) {
     const cw = canvas.width, ch = canvas.height;
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
     const cover = Math.max(cw / iw, ch / ih);
     const contain = Math.min(cw / iw, ch / ih);
+    const z = zoom || 1;
 
     if (cw >= ch || contain >= cover * 0.985) {
       // منظره‌ی افقی (یا نزدیک به نسبت خود کلیپ): کاور تمام‌صفحه، لبه تیز
-      const dw = iw * cover, dh = ih * cover;
+      const dw = iw * cover * z, dh = ih * cover * z;
       ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
     } else {
       // پرتره: زیرلایه‌ی محو هم‌رنگ صحنه + تصویر وسط با بزرگ‌نمایی ملایم
@@ -221,13 +218,34 @@
       const c = Math.max(cw / 48, ch / 32);
       const bw = 48 * c, bh = 32 * c;
       ctx.drawImage(tiny, (cw - bw) / 2, (ch - bh) / 2, bw, bh);
-      const scale = contain * 1.15;
+      const scale = contain * 1.15 * z;
       const dw = iw * scale, dh = ih * scale;
       ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
     }
   }
 
+  // اسکراب خامه‌ای: بین دو فریم مجاور بلند می‌کنیم (24fps سورس → حرکت پیوسته 60fps)
+  function drawFrame(fi, zoom) {
+    if (!canvas.width) resizeCanvas();
+    const i0 = Math.max(0, Math.min(FRAME_COUNT - 1, Math.floor(fi)));
+    const i1 = Math.min(FRAME_COUNT - 1, i0 + 1);
+    const f = Math.min(1, Math.max(0, fi - i0));
+    const img0 = frames[i0], img1 = frames[i1];
+    if (img0 && img1 && f > 0.02) {
+      drawOne(img0, zoom);
+      ctx.globalAlpha = f;
+      drawOne(img1, zoom);
+      ctx.globalAlpha = 1;
+    } else if (img0) {
+      drawOne(img0, zoom);
+    } else {
+      const r = nearestLoaded(i0);
+      if (frames[r]) drawOne(frames[r], zoom);
+    }
+  }
+
   // ---------- تایم‌لاین: یک take پیوسته، ۴ فصل ----------
+  // خروجی idx اعشاری است — drawFrame بین دو فریم مجاور بلند می‌کند
   function timelineAt(x) {
     if (x <= INTRO_END) return { idx: GRID_HOLD };
     const t = Math.min(1, (x - INTRO_END) / (1 - INTRO_END));
@@ -237,7 +255,7 @@
       if (t <= acc + w || k === CHAPTERS.length - 1) {
         const local = Math.min(1, Math.max(0, (t - acc) / w));
         const c = CHAPTERS[k];
-        return { idx: Math.round(c.from + local * (c.to - c.from)), cap: k, local };
+        return { idx: c.from + local * (c.to - c.from), cap: k, local };
       }
       acc += w;
     }
@@ -294,13 +312,18 @@
       const span = Math.max(d.leave - d.enter, 0.001);
       if (x >= d.enter && x <= d.leave) {
         d.el.classList.add("is-in");
-        d.tl.progress(Math.min(1, ((x - d.enter) / span) * 4));
+        const p = Math.min(1, (x - d.enter) / span);
+        d.tl.progress(Math.min(1, p * 4));
+        // دریفت مویی با پیشروی فصل — کپشن مثل تایتل‌کارت فیلم آرام بالا می‌رود
+        d.el.style.setProperty("--drift", `${((0.5 - p) * 26).toFixed(1)}px`);
       } else if (x < d.enter) {
         d.el.classList.remove("is-in");
         d.tl.progress(0);
+        d.el.style.setProperty("--drift", "13px");
       } else {
         d.el.classList.remove("is-in");
         d.tl.progress(Math.max(0, 1 - (x - d.leave) / 0.012));
+        d.el.style.setProperty("--drift", "-13px");
       }
     });
   }
@@ -332,17 +355,28 @@
     }
   }
 
+  const progressEl = document.getElementById("progress");
+
   function render() {
     const { idx } = timelineAt(smoothQ);
-    sampleBg(idx % 20 === 0 ? idx : -1);
-    drawFrame(idx);
+    // زوم ریز سرعت‌محور: اسکرول تند = فریم کمی بزرگ‌تر (کشش)؛ توقف = آرام برمی‌گردد
+    const vel = Math.abs(targetQ - smoothQ);
+    const zoom = 1 + Math.min(vel * 1.1, 0.035);
+    sampleBg(Math.round(idx) % 20 === 0 ? Math.round(idx) : -1);
+    drawFrame(idx, zoom);
     // پرده‌ی تیره‌ی هیرو: فریم گرید عقب می‌نشیند تا کپی بخواند؛ با شروع اسکرول کنار می‌رود
     const veil = 0.44 * Math.max(0, 1 - smoothQ / (INTRO_END * 0.85));
     if (veil > 0.005) {
       ctx.fillStyle = `rgba(5,4,8,${veil.toFixed(3)})`;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-    prefetchAround(idx);
+    prefetchAround(Math.round(idx));
+  }
+
+  function syncProgress() {
+    if (!progressEl) return;
+    const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    progressEl.style.transform = `scaleX(${Math.min(1, window.scrollY / max).toFixed(4)})`;
   }
 
   let lastP = -1;
@@ -357,6 +391,7 @@
         catch (e) { lenis = null; }
       }
       const x = Math.min(1, Math.max(0, window.scrollY / scrubLen));
+      syncProgress();
       if (Math.abs(x - lastP) > 0.000004) {
         lastP = x;
         try {
@@ -398,6 +433,37 @@
       });
     }, { threshold: 0.4 });
     io.observe(stats);
+  }
+
+  // ---------- ریویل اسکرولی کالکشن ----------
+  let revealIO = null;
+  function initReveals() {
+    if (prefersReducedMotion || !("IntersectionObserver" in window)) return;
+    if (revealIO) revealIO.disconnect();
+    revealIO = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting || en.target.dataset.revealed) return;
+        en.target.dataset.revealed = "1";
+        revealIO.unobserve(en.target);
+        gsap.to(en.target, {
+          opacity: 1, y: 0,
+          duration: 0.65,
+          delay: (parseFloat(en.target.dataset.revIdx) || 0) * 0.09,
+          ease: "power2.out",
+          clearProps: "transform",
+        });
+      });
+    }, { threshold: 0.15, rootMargin: "0px 0px -8% 0px" });
+    const targets = [
+      ...document.querySelectorAll("#collection .col-head, #collection .stat"),
+      ...document.querySelectorAll("#cards .card"),
+    ];
+    targets.forEach((el, i) => {
+      delete el.dataset.revealed;
+      gsap.set(el, { opacity: 0, y: 26 });
+      el.dataset.revIdx = String(el.classList.contains("card") ? i % 4 : 0);
+      revealIO.observe(el);
+    });
   }
 
   // ---------- کالکشن ----------
@@ -446,6 +512,7 @@
       card.append(media, body);
       wrap.appendChild(card);
     });
+    initReveals();
   }
 
   // ---------- سبد خرید ----------
@@ -568,6 +635,7 @@
       if (v) el.textContent = v;
     });
     document.getElementById("lang-toggle").textContent = lang === "fa" ? "EN" : "فا";
+    if (progressEl) progressEl.style.transformOrigin = lang === "fa" ? "right" : "left";
     document.title = lang === "fa" ? "WRAPMODE — استودیو رپ خودرو" : "WRAPMODE — Car Wrap Studio";
     document.querySelectorAll(".stat-number").forEach((el) => {
       if (el.dataset.done) el.textContent = faNum(parseFloat(el.dataset.value));
