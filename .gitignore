@@ -56,3 +56,6 @@ tmp-preview/
 
 reference/*.mp4
 tmp-new/
+
+# freebuff tool workspace
+/.freebuff/
