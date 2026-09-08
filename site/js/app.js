@@ -1,34 +1,35 @@
-/* WRAPMODE — کلیپ ۱۰ ثانیه‌ای استودیو: یک take پیوسته، ۴ فصل + گرید معرفی (v22 — بلند بین‌فریمی، زوم سرعت‌محور، نوار پیشرفت، ریویل کالکشن) */
+/* WRAPMODE — ریل عمودی استودیو: یک take پیوسته، ۵ فصل + بوکه‌ی معرفی (v23 — ریل ۰۰۶ بدون واترمارک) */
 (() => {
   "use strict";
 
   // ---------- پیکربندی ----------
-  // کلیپ: 1152×768 (۳:۲)، ۲۴fps، ۲۴۱ فریم — برداری یک‌تکه در استودیو
-  // 0-8 گرید معرفی / 10-54 پرچم‌دار طلایی / 56-76 آنیمه شب / 78-200 ریسینگ ۶۶ (با اکت مجنتا) / 202-240 ساکورا
-  // فریم‌های Enhance‌شده: Lanczos ۲× (2304×1536) + CAS 0.5 — بوم دسکتاپ downscale می‌نویسد، تیزتر
-  const FRAME_DIR = "frames3/";
+  // کلیپ: 720×1280 (۹:۱۶ عمودی)، ۲۴fps، ۲۴۱ فریم — ریل پنج‌طرحی جدید
+  // 0-12 بوکه‌ی تاریک / 14-48 سامورایی موج / 50-96 آنیمه مجنتا / 100-144 هپی هورس / 148-188 گرافیتی نئون / 192-240 ساکورا شب
+  // فریم‌های Enhance‌شده: حذف واترمارک (delogo) + Lanczos ۲× (1440×2560) + CAS 0.5 — بوم دسکتاپ downscale می‌نویسد، تیزتر
+  const FRAME_DIR = "frames4/";
   const FRAME_COUNT = 241;
-  const GRID_HOLD = 2;      // فریم گرید معرفی (هیرو)
+  const GRID_HOLD = 7;      // فریم بوکه‌ی معرفی (هیرو)
 
   const CHAPTERS = [
-    { from: 2,   to: 54  }, // ۱ پرچم‌دار — ورود با زومِ گریدِ خودِ کلیپ
-    { from: 56,  to: 76  }, // ۲ آنیمه شب
-    { from: 78,  to: 200 }, // ۳ ریسینگ ۶۶
-    { from: 202, to: 240 }, // ۴ ساکورا
+    { from: 14,  to: 48  }, // ۱ سامورایی موج
+    { from: 50,  to: 96  }, // ۲ آنیمه مجنتا
+    { from: 100, to: 144 }, // ۳ هپی هورس
+    { from: 148, to: 188 }, // ۴ گرافیتی نئون
+    { from: 192, to: 240 }, // ۵ ساکورا شب
   ];
-  // سهم اسکرول هر فصل (جمع = ۱) — ماشین مشکی کوتاه‌تر از بقیه فیلم است، کمی فرصت بیشتر می‌گیرد
-  const CH_WEIGHTS = [0.25, 0.17, 0.34, 0.24];
-  const INTRO_END = 0.05;   // سهم هیروی ثابت (فریم گرید)
+  // سهم اسکرول هر فصل (جمع = ۱) — متناسب با طول هر طرح در ریل
+  const CH_WEIGHTS = [0.16, 0.21, 0.21, 0.19, 0.23];
+  const INTRO_END = 0.05;   // سهم هیروی ثابت (فریم بوکه)
 
   const WA_NUMBER = "989304140872";
 
-  // ---------- ۵ طرح کالکشن (به ترتیب فیلم؛ گرافیتی فقط کارت) ----------
+  // ---------- ۵ طرح کالکشن (به ترتیب ریل جدید) ----------
   const DESIGNS = [
-    { en: "GOLD FLAGSHIP", fa: "پرچم‌دار طوسی/طلایی", descFa: "پرچم‌دار کالکشن؛ بدنه‌ی روشن با گرافیک طلایی و مشکی.", descEn: "The collection flagship — pearl body with gold and black graphics.", price: 45000000, img: "img/design-8.webp" },
-    { en: "NIGHT ANIME",   fa: "آنیمه شب",            descFa: "گرافیک آنیمه روی بدنه مشکی؛ فضای تیره و سینمایی.",    descEn: "Anime graphics on black body, after-dark mood.", price: 42000000, img: "img/design-2.webp" },
-    { en: "RACING LIVERY", fa: "لیوری ریسینگ ۶۶",     descFa: "لیوری مسابقه‌ای قرمز/سفید با شماره‌ی ۶۶؛ حس پیست در خیابان.", descEn: "Red/white #66 race livery — track-born energy.", price: 28000000, img: "img/design-4.webp" },
-    { en: "SAKURA WHITE",  fa: "ساکورا سفید",         descFa: "چاپ آنیمه صورتی روی بدنه سفید؛ درخشش نرم زیر نور.",   descEn: "Pink anime print over pearl white body.", price: 38000000, img: "img/design-1.webp" },
-    { en: "STREET GRAFFITI", fa: "گرافیتی خیابانی",   descFa: "آرت گرافیتی رنگی با حال‌وهوای خیابانی.",              descEn: "Colorful street-art graffiti, loud and bold.", price: 32000000, img: "img/design-3.webp" },
+    { en: "SAMURAI WAVE",  fa: "سامورایی موج",   descFa: "موج بزرگ قرمز و فیروزه‌ای با سوارِ سامورایی؛ حس اوکی‌یوی ژاپن.", descEn: "Great red-and-teal wave with a samurai rider — ukiyo-e energy.", price: 45000000, img: "img/design-1.webp" },
+    { en: "MAGENTA ANIME", fa: "آنیمه مجنتا",    descFa: "پرتره‌ی آنیمه‌ی مجنتا روی بدنه‌ی نقره‌ای؛ جسور، پرانرژی، دیده‌شدن.", descEn: "Magenta anime portrait over a silver body — bold and loud.", price: 42000000, img: "img/design-2.webp" },
+    { en: "HAPPY HORSE",   fa: "هپی هورس ۱.۱",   descFa: "کمدی‌بوک سفید/مشکی با جوکر و تاج‌ها؛ امضای این کالکشن.",        descEn: "White/black comic splatter with clown and crowns — the signature.", price: 38000000, img: "img/design-3.webp" },
+    { en: "NEON GRAFFITI", fa: "گرافیتی نئون",   descFa: "آرت گرافیتی چندرنگ روی بدنه‌ی قرمز، زیر نور نئون سبز.",        descEn: "Multicolour graffiti on red body under green neon light.", price: 32000000, img: "img/design-4.webp" },
+    { en: "SAKURA NIGHT",  fa: "ساکورا شب",      descFa: "چاپ ساکورا و آنیمه‌ی صورتی روی بدنه‌ی مشکی؛ مه و گل‌ریزان.",    descEn: "Sakura anime print on black body — mist and falling petals.", price: 28000000, img: "img/design-5.webp" },
   ];
 
   // ---------- بیلینگوال ----------
@@ -40,10 +41,11 @@
       "hero.sub": "فویل کست اورجینال، چاپ اختصاصی و نصب حرفه‌ای — پنج طرح فول‌بادی در یک روایت سینمایی.",
       "hero.cta1": "مشاهده کالکشن", "hero.cta2": "مشاوره واتساپ",
       "scroll": "اسکرول کنید",
-      "cap1.title": "پرچم‌دار — طلاییِ کالکشن",
-      "cap2.title": "آنیمه شب — پس از تاریکی",
-      "cap3.title": "لیوری ریسینگ — زاده‌ی پیست",
-      "cap4.title": "ساکورا — سفیدِ بی‌آلایش",
+      "cap1.title": "سامورایی موج — افسانه‌ی دریا",
+      "cap2.title": "آنیمه مجنتا — همه‌ی نگاه‌ها",
+      "cap3.title": "هپی هورس — یاغیِ کمدی",
+      "cap4.title": "گرافیتی نئون — پس از تاریکی",
+      "cap5.title": "ساکورا — شبِ گل‌ریزان",
       "col.kicker": "THE COLLECTION — 05",
       "col.title": "پنج طرح منتخب فول‌بادی",
       "col.sub": "قیمت تمام‌شده با چاپ و اجرای حرفه‌ای — انتخاب کنید و سفارش را در واتساپ نهایی کنید.",
@@ -63,10 +65,11 @@
       "hero.sub": "Original cast vinyl, custom prints and professional installation — five full-body designs in one cinematic scroll.",
       "hero.cta1": "View the collection", "hero.cta2": "WhatsApp consultation",
       "scroll": "Scroll",
-      "cap1.title": "The flagship — gold standard",
-      "cap2.title": "Night anime — after dark",
-      "cap3.title": "Racing livery — track born",
-      "cap4.title": "Sakura — purity in white",
+      "cap1.title": "Samurai wave — legend of the tide",
+      "cap2.title": "Magenta anime — every eye on you",
+      "cap3.title": "Happy Horse — the comic rebel",
+      "cap4.title": "Neon graffiti — after dark",
+      "cap5.title": "Sakura — night of falling petals",
       "col.kicker": "THE COLLECTION — 05",
       "col.title": "Five full-body designs",
       "col.sub": "Final price including print and professional installation — pick one and order on WhatsApp.",
