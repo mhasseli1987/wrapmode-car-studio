@@ -59,3 +59,9 @@ tmp-new/
 
 # freebuff tool workspace
 /.freebuff/
+
+# Local Netlify folder
+.netlify
+
+# agent memory / local tooling state
+/.workbuddy-ai/
