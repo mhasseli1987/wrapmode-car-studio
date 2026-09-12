@@ -1,14 +1,27 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WRAPMODE — استودیو رپ خودرو</title>
-  <meta name="description" content="پنج طرح رپ فول‌بادی در یک اسکرول سینمایی — ورپ‌مود، استودیو تخصصی رپ خودرو." />
+  <title>WRAPMODE — Car Wrap Studio</title>
+  <meta name="description" content="Five full-body car wrap designs in one cinematic scroll — Wrapmode, the specialized car wrap studio." />
+  <meta name="theme-color" content="#050408" />
+  <link rel="canonical" href="https://wrapmode.ir/" />
+  <link rel="icon" href="img/logo-transparent.webp" type="image/webp" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="WRAPMODE" />
+  <meta property="og:title" content="WRAPMODE — Car Wrap Studio" />
+  <meta property="og:description" content="Five full-body car wrap designs in one cinematic scroll." />
+  <meta property="og:url" content="https://wrapmode.ir/" />
+  <meta property="og:image" content="img/design-1.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500&family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=14" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500&family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css?v=29" />
   <!-- کلیدفریم‌های شروع فصل‌ها: بوکه / سامورایی / مجنتا / هپی‌هورس / گرافیتی / ساکورا -->
   <link rel="preload" as="image" href="frames4/f_0007.webp" type="image/webp" />
   <link rel="preload" as="image" href="frames4/f_0015.webp" type="image/webp" />
@@ -16,6 +29,10 @@
   <link rel="preload" as="image" href="frames4/f_0101.webp" type="image/webp" />
   <link rel="preload" as="image" href="frames4/f_0149.webp" type="image/webp" />
   <link rel="preload" as="image" href="frames4/f_0193.webp" type="image/webp" />
+  <script>
+    // پیش از رندر، حالت بدون‌JS/بدون‌بوم را علامت بزن تا لودر گیر نکند
+    document.documentElement.classList.add("has-js");
+  </script>
 </head>
 <body>
 
@@ -23,7 +40,7 @@
   <div id="loader">
     <div class="loader-brand" dir="ltr">WRAPMODE</div>
     <div id="loader-bar"><span id="loader-fill"></span></div>
-    <div id="loader-percent">۰٪</div>
+    <div id="loader-percent">0%</div>
   </div>
 
   <div class="grain" aria-hidden="true"></div>
@@ -31,16 +48,50 @@
   <div class="progress" id="progress" aria-hidden="true"></div>
 
   <header class="site-header" id="site-header">
-    <a class="logo latin" href="#top" dir="ltr">WRAPMODE</a>
-    <nav>
-      <a href="#collection" data-i18n="nav.designs">کالکشن</a>
-      <a href="#" id="nav-contact-btn" role="button" data-i18n="nav.contact">تماس</a>
-      <button type="button" id="lang-toggle" class="lang-btn" dir="ltr" aria-label="تغییر زبان">EN</button>
-      <button type="button" id="cart-open-btn" class="cart-btn" aria-label="سبد خرید">
-        <span data-i18n="nav.cart">سبد</span>
-        <span id="cart-badge" class="cart-badge" hidden>۰</span>
-      </button>
-    </nav>
+    <div class="header-pill">
+      <a class="brand" href="https://wrapmode.ir" target="_blank" rel="noopener" aria-label="WrapMode">
+        <img src="img/logo-transparent.webp" alt="WrapMode" width="120" height="48" />
+      </a>
+      <nav class="head-nav" aria-label="اصلی">
+        <a href="https://wrapmode.ir/products/" target="_blank" rel="noopener" data-i18n="nav.m1">همه محصولات</a>
+        <a href="https://wrapmode.ir/products/avery-dennison/" target="_blank" rel="noopener" data-i18n="nav.m2">انواع PPF</a>
+        <a href="https://wrapmode.ir/products/kodak/" target="_blank" rel="noopener" data-i18n="nav.m3">کاور رنگی</a>
+        <a href="https://wrapmode.ir/products/solar/" target="_blank" rel="noopener" data-i18n="nav.m4">شیشه دودی برند SOLAR</a>
+        <a href="https://wrapmode.ir/products/installation-tools/" target="_blank" rel="noopener" data-i18n="nav.m5">ابزار نصب</a>
+        <a href="https://wrapmode.ir/products/luxury-accessories/" target="_blank" rel="noopener" data-i18n="nav.m6">لوازم لوکس</a>
+        <a href="https://wrapmode.ir/contact/" target="_blank" rel="noopener" data-i18n="nav.m7">تماس با ما</a>
+        <a href="https://wrapmode.ir/about/" target="_blank" rel="noopener" data-i18n="nav.m8">درباره ما</a>
+      </nav>
+      <div class="head-actions">
+        <button type="button" id="cart-open-btn" class="icon-btn head-cart" aria-label="سبد خرید">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <span id="cart-badge" class="cart-badge" hidden>0</span>
+        </button>
+        <div class="head-cta">
+          <a href="#" id="nav-contact-btn" role="button" data-i18n="nav.cta1">تماس مستقیم</a>
+          <a href="https://wrapmode.ir/order/track/" target="_blank" rel="noopener" data-i18n="nav.cta2">پیگیری سفارش</a>
+        </div>
+        <button type="button" id="menu-toggle" class="icon-btn menu-btn" aria-label="منو" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="head-drawer" id="head-drawer" hidden>
+      <nav aria-label="منوی موبایل">
+        <a href="https://wrapmode.ir/products/" target="_blank" rel="noopener" data-i18n="nav.m1">همه محصولات</a>
+        <a href="https://wrapmode.ir/products/avery-dennison/" target="_blank" rel="noopener" data-i18n="nav.m2">انواع PPF</a>
+        <a href="https://wrapmode.ir/products/kodak/" target="_blank" rel="noopener" data-i18n="nav.m3">کاور رنگی</a>
+        <a href="https://wrapmode.ir/products/solar/" target="_blank" rel="noopener" data-i18n="nav.m4">شیشه دودی برند SOLAR</a>
+        <a href="https://wrapmode.ir/products/installation-tools/" target="_blank" rel="noopener" data-i18n="nav.m5">ابزار نصب</a>
+        <a href="https://wrapmode.ir/products/luxury-accessories/" target="_blank" rel="noopener" data-i18n="nav.m6">لوازم لوکس</a>
+        <a href="https://wrapmode.ir/contact/" target="_blank" rel="noopener" data-i18n="nav.m7">تماس با ما</a>
+        <a href="https://wrapmode.ir/about/" target="_blank" rel="noopener" data-i18n="nav.m8">درباره ما</a>
+      </nav>
+      <div class="head-cta">
+        <a href="#" id="m-contact-btn" role="button" data-i18n="nav.cta1">تماس مستقیم</a>
+        <a href="https://wrapmode.ir/order/track/" target="_blank" rel="noopener" data-i18n="nav.cta2">پیگیری سفارش</a>
+      </div>
+    </div>
   </header>
 
   <!-- هیرو: تایپوگرافی روی بوم، با اسکرول محو می‌شود -->
@@ -48,10 +99,6 @@
     <p class="kicker latin" dir="ltr" data-i18n="hero.kicker">CAR WRAP STUDIO</p>
     <h1 class="hero-title" data-i18n="hero.title">پنج طرح. یک اسکرول.</h1>
     <p class="hero-sub" data-i18n="hero.sub">فویل کست اورجینال، چاپ اختصاصی و نصب حرفه‌ای — پنج طرح فول‌بادی در یک روایت سینمایی.</p>
-    <div class="hero-ctas">
-      <a class="btn primary" href="#collection" data-i18n="hero.cta1">مشاهده کالکشن</a>
-      <a class="btn ghost" id="hero-wa-btn" href="#" target="_blank" rel="noopener" data-i18n="hero.cta2">مشاوره واتساپ</a>
-    </div>
   </section>
   <div class="scroll-hint" id="scroll-hint">
     <span data-i18n="scroll">اسکرول کنید</span>
@@ -65,23 +112,18 @@
   <div id="scrub-stage">
     <div class="cap" data-cap="0">
       <p class="cap-kicker latin" dir="ltr">DESIGN 01 — SAMURAI WAVE</p>
-      <h2 class="cap-title" data-i18n="cap1.title">سامورایی موج — افسانه‌ی دریا</h2>
     </div>
     <div class="cap" data-cap="1">
       <p class="cap-kicker latin" dir="ltr">DESIGN 02 — MAGENTA ANIME</p>
-      <h2 class="cap-title" data-i18n="cap2.title">آنیمه مجنتا — همه‌ی نگاه‌ها</h2>
     </div>
     <div class="cap" data-cap="2">
       <p class="cap-kicker latin" dir="ltr">DESIGN 03 — HAPPY HORSE</p>
-      <h2 class="cap-title" data-i18n="cap3.title">هپی هورس — یاغیِ کمدی</h2>
     </div>
     <div class="cap" data-cap="3">
       <p class="cap-kicker latin" dir="ltr">DESIGN 04 — NEON GRAFFITI</p>
-      <h2 class="cap-title" data-i18n="cap4.title">گرافیتی نئون — پس از تاریکی</h2>
     </div>
     <div class="cap" data-cap="4">
       <p class="cap-kicker latin" dir="ltr">DESIGN 05 — SAKURA NIGHT</p>
-      <h2 class="cap-title" data-i18n="cap5.title">ساکورا — شبِ گل‌ریزان</h2>
     </div>
   </div>
 
@@ -95,15 +137,15 @@
     <div class="cards" id="cards"></div>
     <div class="stats" id="stats" aria-label="آمار استودیو">
       <div class="stat">
-        <span class="stat-number" data-value="200">۰</span><span class="stat-plus">+</span>
+        <span class="stat-number" data-value="200">0</span><span class="stat-plus">+</span>
         <span class="stat-label" data-i18n="stat1">پروژه اجرا شده</span>
       </div>
       <div class="stat">
-        <span class="stat-number" data-value="5">۰</span>
+        <span class="stat-number" data-value="5">0</span>
         <span class="stat-label" data-i18n="stat2">سال سابقه تخصصی</span>
       </div>
       <div class="stat">
-        <span class="stat-number" data-value="100">۰</span><span class="stat-plus">٪</span>
+        <span class="stat-number" data-value="100">0</span><span class="stat-plus">٪</span>
         <span class="stat-label" data-i18n="stat3">فویل اورجینال</span>
       </div>
     </div>
@@ -112,15 +154,28 @@
   <footer class="site-footer">
     <div class="foot-logo latin" dir="ltr">WRAPMODE</div>
     <div class="foot-line"></div>
-    <p class="foot-tag" data-i18n="foot.tag">رپ کن. بران. نگاه‌ها را بچسبان.</p>
     <div class="foot-meta">
-      <span dir="ltr">© 2026 WRAPMODE — ALL RIGHTS RESERVED</span>
+      <img class="made-by-enzo" src="img/made-by-enzo.png" alt="Made by ENZO — All Rights Reserved ©" dir="ltr" />
       <nav class="foot-social">
-        <a href="#" id="foot-wa" target="_blank" rel="noopener" aria-label="WhatsApp">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a9.9 9.9 0 0 0-8.4 15.16L2 22l4.95-1.3A9.9 9.9 0 1 0 12.04 2Zm5.8 14.06c-.25.7-1.45 1.33-2 1.38-.55.05-1.06.25-3.6-.75-3.05-1.2-4.97-4.35-5.12-4.55-.15.2-1.22-1.62-1.22-3.1 0-1.47.77-2.2 1.05-2.5.27-.3.6-.37.8-.37s.4 0 .57.01c.18.01.42-.06.65.5.25.6.82 2 .9 2.15.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.31.39-.45.52-.15.15-.3.31-.13.61.17.3.76 1.26 1.64 2.04 1.12 1 2.07 1.31 2.37 1.46.3.15.47.12.65-.08.17-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.27.1 1.7.8 2 .95.3.15.5.22.57.35.07.12.07.72-.18 1.42Z"/></svg>
+        <a href="https://wa.me/989196828013" target="_blank" rel="noopener" aria-label="WhatsApp">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
         </a>
-        <a href="https://instagram.com/wrapmode.ir" target="_blank" rel="noopener" aria-label="Instagram">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>
+        <a href="https://www.instagram.com/car.vinyl?igsh=YnowNXN0MXdpNm53" target="_blank" rel="noopener" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <defs>
+              <radialGradient id="igGrad" cx="30%" cy="107%" r="130%">
+                <stop offset="0%" stop-color="#fdf497"/>
+                <stop offset="10%" stop-color="#fdf497"/>
+                <stop offset="30%" stop-color="#fd5949"/>
+                <stop offset="60%" stop-color="#d6249f"/>
+                <stop offset="90%" stop-color="#285AEB"/>
+              </radialGradient>
+            </defs>
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="url(#igGrad)"/>
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5" stroke-opacity="0.3"/>
+            <circle cx="12" cy="12" r="4" fill="none" stroke="white" stroke-width="1.8"/>
+            <circle cx="17.5" cy="6.5" r="1.2" fill="white"/>
+          </svg>
         </a>
       </nav>
     </div>
@@ -137,7 +192,7 @@
       <ul id="cart-items" class="cart-items"></ul>
       <p id="cart-empty" class="cart-empty" data-i18n="cart.empty">سبد خرید خالی است.</p>
       <div class="cart-foot">
-        <div class="cart-total"><span data-i18n="cart.total">جمع کل</span><strong id="cart-total-value">۰</strong></div>
+        <div class="cart-total"><span data-i18n="cart.total">جمع کل</span><strong id="cart-total-value">0</strong></div>
         <a id="cart-order-btn" class="btn primary wide" href="#" target="_blank" rel="noopener" data-i18n="cart.order">ثبت سفارش در واتساپ</a>
       </div>
     </aside>
@@ -155,12 +210,29 @@
     </div>
   </div>
 
-  <a id="wa-float" class="wa-float" href="#" target="_blank" rel="noopener" aria-label="واتساپ">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a9.9 9.9 0 0 0-8.4 15.16L2 22l4.95-1.3A9.9 9.9 0 1 0 12.04 2Zm5.8 14.06c-.25.7-1.45 1.33-2 1.38-.55.05-1.06.25-3.6-.75-3.05-1.2-4.97-4.35-5.12-4.55-.15.2-1.22-1.62-1.22-3.1 0-1.47.77-2.2 1.05-2.5.27-.3.6-.37.8-.37s.4 0 .57.01c.18.01.42-.06.65.5.25.6.82 2 .9 2.15.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.31.39-.45.52-.15.15-.3.31-.13.61.17.3.76 1.26 1.64 2.04 1.12 1 2.07 1.31 2.37 1.46.3.15.47.12.65-.08.17-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.27.1 1.7.8 2 .95.3.15.5.22.57.35.07.12.07.72-.18 1.42Z"/></svg>
-  </a>
-
   <script src="https://cdn.jsdelivr.net/npm/lenis@1/dist/lenis.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
-  <script src="js/app.js?v=23"></script>
+  <script src="js/app.js?v=37"></script>
+
+  <noscript>
+    <style>
+      #loader { display: none !important; }
+      .hero-copy { opacity: 1 !important; pointer-events: auto !important; }
+      .scroll-hint { display: none; }
+      .cap { position: static; visibility: visible; transform: none; padding: 24px 6vw; }
+      #scrub-stage { height: auto !important; }
+      .nojs-notice {
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+        background: rgba(5, 4, 8, 0.94); color: #f5f1e8;
+        padding: 12px 20px; text-align: center;
+        font-family: system-ui, sans-serif; font-size: 0.85rem;
+        border-top: 1px solid rgba(201, 162, 94, 0.4);
+      }
+    </style>
+    <p class="nojs-notice">
+      This site uses scroll-driven animation. Please enable JavaScript, or
+      <a href="#collection" style="color:#c9a25e">jump to the collection</a>.
+    </p>
+  </noscript>
 </body>
 </html>

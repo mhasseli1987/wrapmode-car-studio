@@ -30,10 +30,11 @@ img { max-width: 100%; display: block; }
 [dir="ltr"] .latin { font-family: var(--font-display); }
 
 .kicker {
-  font-size: 0.72rem;
+  font-size: clamp(1rem, 2.6vw, 1.3rem);
   letter-spacing: 0.35em; text-indent: 0.35em;
   color: var(--accent);
-  font-weight: 500;
+  font-weight: 700;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.9);
 }
 
 /* ---------- نوار پیشرفت اسکرول ---------- */
@@ -48,7 +49,8 @@ img { max-width: 100%; display: block; }
 
 /* ---------- گرین فیلم ---------- */
 .grain {
-  position: fixed; inset: -50%; z-index: 90;
+  position: fixed; inset: -5%; z-index: 90;
+  contain: strict;
   pointer-events: none; opacity: 0.045;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   animation: grain-shift 0.9s steps(4) infinite;
@@ -60,6 +62,8 @@ img { max-width: 100%; display: block; }
   75% { transform: translate(-3%, -3%); }
   100% { transform: translate(2%, 2%); }
 }
+/* هنگام اسکراب، انیمیشن گرین متوقف تا کامپوزیت اضافه نشود */
+body.scrubbing .grain { animation-play-state: paused; }
 
 /* ---------- کرسر سفارشی ---------- */
 #cursor {
@@ -106,42 +110,102 @@ img { max-width: 100%; display: block; }
   margin-top: 4px;         /* ریتم عمودی: برند — خط — عدد */
 }
 
-/* ---------- هدر ---------- */
+/* ---------- هدر: پیل شناور دقیقاً به سبک wrapmode.ir ---------- */
 .site-header {
   position: fixed; top: 0; right: 0; left: 0; z-index: 60;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px clamp(20px, 4vw, 56px);
-  transition: background 0.35s ease, border-color 0.35s ease, padding 0.35s ease;
-  border-bottom: 1px solid transparent;
+  padding: 12px clamp(12px, 2vw, 24px) 0;
 }
-.site-header.scrolled {
-  padding-block: 12px;
+.header-pill {
+  max-width: 1280px; margin-inline: auto;
+  height: 64px;
+  display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 0 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(251, 191, 36, 0.6);   /* amber-400/60 مثل موبایل سایت اصلی */
+  background: rgba(5, 4, 8, 0.3);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+.site-header.scrolled .header-pill {
   background: rgba(5, 4, 8, 0.62);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  border-bottom-color: var(--hairline);
+  border-color: rgba(255, 255, 255, 0.1);
 }
-.logo {
-  font-size: 1rem; letter-spacing: 0.34em;
-  color: var(--ink); text-decoration: none;
+.brand { display: flex; align-items: center; flex-shrink: 0; user-select: none; }
+.brand img { height: 40px; width: auto; object-fit: contain; transition: filter 0.3s; }
+.head-nav { display: none; align-items: center; gap: 4px; }
+.head-nav a {
+  position: relative; padding: 8px 12px; border-radius: 12px;
+  font-size: 0.875rem; font-weight: 600; white-space: nowrap;
+  color: rgba(242, 240, 236, 0.8); text-decoration: none;
+  transition: color 0.3s, background 0.3s;
 }
-.site-header nav { display: flex; align-items: center; gap: clamp(14px, 2.5vw, 28px); }
-.site-header nav a, .cart-btn, .lang-btn {
-  color: var(--mut); text-decoration: none;
-  font-size: 0.88rem; font-family: var(--font-body);
+.head-nav a:hover { color: var(--ink); background: rgba(255, 255, 255, 0.05); }
+.head-actions { display: flex; flex-direction: row-reverse; align-items: center; gap: 4px; flex-shrink: 0; }
+.icon-btn {
+  position: relative;
+  width: 44px; height: 44px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
   background: none; border: none; cursor: pointer;
-  min-height: var(--touch-min);
-  display: inline-flex; align-items: center; gap: 6px;
-  transition: color 0.25s;
+  color: rgba(242, 240, 236, 0.8);
+  transition: color 0.3s, background 0.3s;
 }
-.site-header nav a:hover, .cart-btn:hover, .lang-btn:hover { color: var(--ink); }
-.lang-btn { font-family: var(--font-display); letter-spacing: 0.14em; font-size: 0.92rem; }
-.cart-btn { color: var(--accent); }
+.icon-btn:hover { color: var(--ink); background: rgba(255, 255, 255, 0.05); }
+.head-cart { color: #FBBF24; }   /* amber-400 — سبد مثل سایت اصلی */
+.head-cart:hover { color: #FCD34D; }
 .cart-badge {
-  min-width: 1.6em; padding: 0.1em 0.45em;
-  border-radius: 999px; background: var(--accent); color: var(--bg);
-  font-size: 0.72rem; font-weight: 700;
+  position: absolute; top: 3px; inset-inline-end: 2px;
+  min-width: 1.5em; padding: 0.05em 0.4em;
+  border-radius: 999px; background: #FBBF24; color: #000;
+  font-size: 0.66rem; font-weight: 800; line-height: 1.5;
+  text-align: center;
 }
+.head-cta { display: none; flex-direction: column; gap: 4px; margin-inline-start: 4px; flex-shrink: 0; }
+.head-cta a {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 28px; min-width: 112px; padding: 0 12px; border-radius: 6px;
+  font-size: 11px; font-weight: 800; line-height: 1; white-space: nowrap;
+  color: #000; background: #FBBF24; text-decoration: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  transition: transform 0.2s;
+}
+.head-cta a:hover { transform: scale(1.02); }
+.head-cta a:active { transform: scale(0.98); }
+.menu-btn { display: inline-flex; }
+@media (min-width: 1024px) {
+  .head-nav { display: flex; }
+  .menu-btn { display: none; }
+}
+@media (min-width: 768px) {
+  .header-pill { height: 80px; padding: 0 24px; border-color: rgba(255, 255, 255, 0.1); }
+  .brand img { height: 48px; }
+  .head-cta { display: flex; }
+}
+/* کشوی منوی موبایل */
+.head-drawer {
+  max-width: 1280px; margin: 8px auto 0;
+  border-radius: 16px;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: rgba(5, 4, 8, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 10px;
+  display: flex; flex-direction: column; gap: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.head-drawer[hidden] { display: none; }
+.head-drawer nav { display: flex; flex-direction: column; }
+.head-drawer nav a {
+  padding: 12px 14px; border-radius: 12px;
+  color: rgba(242, 240, 236, 0.85); text-decoration: none;
+  font-size: 0.95rem; font-weight: 600;
+  transition: background 0.25s, color 0.25s;
+}
+.head-drawer nav a:hover { background: rgba(255, 255, 255, 0.05); color: var(--ink); }
+.head-drawer .head-cta { display: flex; flex-direction: row; flex-wrap: wrap; }
+.head-drawer .head-cta a { flex: 1; height: 32px; }
 
 /* ---------- هیرو ---------- */
 .hero-copy {
@@ -176,7 +240,6 @@ img { max-width: 100%; display: block; }
   font-weight: 300;
   text-shadow: 0 1px 14px rgba(5, 4, 8, 0.9);
 }
-.hero-ctas { margin-top: 14px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; pointer-events: auto; }
 .btn {
   min-height: var(--touch-min);
   padding: 10px 30px; border-radius: 999px;
@@ -197,10 +260,12 @@ img { max-width: 100%; display: block; }
   position: fixed; bottom: 26px; right: 50%; transform: translateX(50%);
   z-index: 30;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
-  color: var(--mut); font-size: 0.78rem;
+  color: var(--ink); font-size: 1.15rem; font-weight: 800; letter-spacing: 0.08em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
   pointer-events: none;
   animation: hint-bob 2.8s ease-in-out infinite;
 }
+.scroll-hint svg { width: 26px; height: 26px; stroke-width: 2.5; }
 @keyframes hint-bob {
   0%, 100% { transform: translateX(50%) translateY(0); }
   50% { transform: translateX(50%) translateY(5px); }
@@ -210,6 +275,10 @@ img { max-width: 100%; display: block; }
 .canvas-wrap {
   position: fixed; inset: 0; z-index: 1;
   background: var(--bg);
+  /* لایه‌ی مستقل کامپوزیت تا اسکرول هرگز منتظر ری‌پیینت بوم نماند */
+  transform: translateZ(0);
+  contain: strict;
+  backface-visibility: hidden;
 }
 /* وینیت سینمایی ملایم روی بوم (پس‌زمینه‌ی استودیو روشن است) */
 .canvas-wrap::after {
@@ -228,9 +297,12 @@ img { max-width: 100%; display: block; }
   text-align: center;
   padding: 0 6vw;
   visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  will-change: transform, opacity;
   text-shadow: 0 2px 26px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.9);
 }
-.cap.is-in { visibility: visible; }
+.cap.is-in { visibility: visible; opacity: 1; }
 /* اسکریم نرم پشت کپشن — حس تایتل‌کارت فیلم روی فریم‌های روشن */
 .cap::before {
   content: ""; position: absolute; inset: -36px -4vw;
@@ -242,35 +314,39 @@ img { max-width: 100%; display: block; }
 }
 .cap.is-in::before { opacity: 1; }
 .cap-kicker {
-  display: inline-flex; align-items: center; gap: 14px;
-  font-size: 0.7rem;
-  letter-spacing: 0.4em;
+  display: inline-flex; align-items: center; gap: clamp(10px, 2vw, 18px);
+  font-size: clamp(1.45rem, 5.5vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
   color: var(--accent);
-  margin-bottom: 14px;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
+  margin: 0;
 }
-/* خط‌های مویی طلایی دو طرف کیکر — قاب تایتل‌کارت */
+/* خط‌های مویی طلایی دو طرف نام طرح — قاب تایتل‌کارت */
 .cap-kicker::before, .cap-kicker::after {
-  content: ""; width: clamp(22px, 4vw, 36px); height: 1px;
+  content: ""; width: clamp(26px, 5vw, 52px); height: 2px;
   background: linear-gradient(90deg, transparent, rgba(201, 162, 94, 0.65));
 }
 .cap-kicker::after { background: linear-gradient(90deg, rgba(201, 162, 94, 0.65), transparent); }
-.cap-title {
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: clamp(1.7rem, 4.6vw, 3.1rem);
-  line-height: 1.4;
-  color: var(--ink);
-}
-[dir="ltr"] .cap-title { font-family: var(--font-display); font-weight: 500; }
 
 /* ---------- کالکشن ---------- */
 .collection {
   position: relative; z-index: 30;
-  background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+  background: linear-gradient(180deg, rgba(5, 4, 8, 0.55) 0%, rgba(12, 9, 19, 0.78) 100%);
   border-top: 1px solid var(--hairline);
   padding: clamp(72px, 12vh, 120px) clamp(20px, 5vw, 48px);
 }
-.col-head { max-width: 1120px; margin: 0 auto 44px; text-align: center; }
+/* سربرگ شیشه‌ای مات — بلور بومِ ثابتِ پشت سکشن */
+.col-head {
+  max-width: 1120px; margin: 0 auto 44px; text-align: center;
+  padding: clamp(26px, 4.5vw, 44px) clamp(18px, 4vw, 48px);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(10, 8, 14, 0.32);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 18px 44px rgba(0, 0, 0, 0.4);
+}
 .col-title {
   font-family: var(--font-body);
   font-weight: 700;
@@ -324,7 +400,7 @@ img { max-width: 100%; display: block; }
 }
 .card-price span { color: var(--mut); font-size: 0.75rem; }
 .card-add {
-  min-height: 38px;
+  min-height: var(--touch-min);
   padding: 8px 18px; border-radius: 999px;
   border: 1px solid var(--accent);
   background: transparent; color: var(--accent);
@@ -360,25 +436,31 @@ img { max-width: 100%; display: block; }
   background: var(--bg2);
   border-top: 1px solid var(--hairline);
   text-align: center;
-  padding: 56px clamp(20px, 5vw, 48px) 40px;
+  padding: clamp(64px, 11vh, 110px) clamp(20px, 5vw, 48px) 110px;
 }
+/* وردمارک بزرگ نیمه‌شفاف — وسط فوتر، مثل واترمارک سینمایی */
 .foot-logo {
-  font-size: 1.05rem; letter-spacing: 0.4em; text-indent: 0.4em;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 10.5vw, 7.2rem);
+  letter-spacing: 0.26em; text-indent: 0.26em;
+  line-height: 1;
   color: var(--ink);
+  opacity: 0.78;
+  white-space: nowrap;
 }
 .foot-line {
-  width: 72px; height: 1px;
+  width: clamp(110px, 18vw, 180px); height: 1px;
   background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  margin: 22px auto;
+  margin: clamp(26px, 5vh, 44px) auto;
 }
-.foot-tag { color: var(--mut); font-size: 0.9rem; font-weight: 300; }
+/* ردیف لوگوها — گوشهٔ پایین */
 .foot-meta {
-  margin-top: 30px;
-  display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  position: absolute; bottom: 26px; left: clamp(20px, 4vw, 44px);
+  display: flex; align-items: center; gap: 18px;
   color: var(--mut); font-size: 0.72rem;
   letter-spacing: 0.14em;
-  max-width: 1120px; margin-inline: auto;
 }
+.made-by-enzo { height: 38px; mix-blend-mode: screen; opacity: 0.92; }
 .foot-social { display: flex; gap: 16px; }
 .foot-social a { color: var(--mut); transition: color 0.2s; display: inline-flex; }
 .foot-social a:hover { color: var(--accent); }
@@ -451,30 +533,27 @@ img { max-width: 100%; display: block; }
 .contact-panel p { color: var(--mut); line-height: 2; font-size: 0.9rem; margin-bottom: 20px; }
 .contact-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
-/* ---------- واتساپ شناور ---------- */
-.wa-float {
-  position: fixed; bottom: 22px; left: 22px; z-index: 50;
-  width: 48px; height: 48px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--accent); color: var(--bg);
-  box-shadow: 0 10px 30px rgba(201, 162, 94, 0.3);
-  transition: transform 0.2s;
-}
-.wa-float:hover { transform: translateY(-3px); }
-
 /* ---------- موبایل ---------- */
 @media (max-width: 768px) {
   #scrub-stage { height: 560vh; }
   .hero-title { font-size: clamp(2rem, 9vw, 2.8rem); }
   .cap { bottom: auto; padding: 0 5vw; }
-  .cap-title { font-size: clamp(1.35rem, 6vw, 1.9rem); }
   .cards { grid-template-columns: 1fr; }
   .scroll-hint { bottom: 18px; }
-  .wa-float { bottom: 16px; left: 16px; width: 44px; height: 44px; }
-  .foot-meta { justify-content: center; }
+  .made-by-enzo { height: 30px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .grain, .scroll-hint { animation: none; }
   .card, .card-media img, .card-add, .cap::before { transition: none; }
 }
+
+/* ---------- fallback: بوم در دسترس نیست (no-webgl) ---------- */
+/* اگر canvas/2D context در دسترس نباشد، سایت به‌جای صفحهٔ سیاه به محتوای متنی برمی‌گردد */
+html.no-webgl #loader { display: none; }
+html.no-webgl .canvas-wrap { display: none; }
+html.no-webgl .hero-copy { position: static; padding: 140px 6vw 60px; opacity: 1; pointer-events: auto; }
+html.no-webgl #scrub-stage { height: auto; }
+html.no-webgl .cap { position: static; visibility: visible; transform: none; padding: 24px 6vw; }
+html.no-webgl .cap.is-in { visibility: visible; }
+
