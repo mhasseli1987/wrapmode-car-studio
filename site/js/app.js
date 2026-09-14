@@ -3,28 +3,28 @@
   "use strict";
 
   // ---------- پیکربندی ----------
-  // کلیپ: 720×1280 (۹:۱۶ عمودی)، ۲۴fps، ۲۴۱ فریم — ریل پنج‌طرحی جدید
-  // 0-12 بوکه‌ی تاریک / 14-48 سامورایی موج / 50-96 آنیمه مجنتا / 100-144 هپی هورس / 148-188 گرافیتی نئون / 192-240 ساکورا شب
-  // فریم‌های Enhance‌شده: حذف واترمارک (delogo) + Lanczos ۲× (1440×2560) + CAS 0.5 — بوم دسکتاپ downscale می‌نویسد، تیزتر
-  const FRAME_DIR = isMobileEarly() ? "frames4m/" : "frames4/";
+  // کلیپ ۰۰۷: 720×1280 عمودی، ۲۴fps، ۲۴۱ فریم — پنج صحنه با گذرهای فید-سیاه درون‌خودِ کلیپ
+  // 0-16 فید-این تدریجی (بوکه) / 20-49 صحنهٔ ۱ / 50-97 صحنهٔ ۲ / 98-145 صحنهٔ ۳ / 146-185 صحنهٔ ۴ / 186-240 صحنهٔ ۵ (روشن‌ترین)
+  // مرزها از پروفایل روشنایی پیکسلی: فرورفتگی‌های mean در 50/98/146/187 = کات‌های نرم سورس
+  const FRAME_DIR = isMobileEarly() ? "frames5m/" : "frames5/";
   function isMobileEarly() {
     // موبایل = فریم‌های ۷۲۰×۱۲۸۰ (۴ برابر سبک‌تر برای GPU گوشی) — بقیه با DPR و کش دیکد
     return window.matchMedia("(max-width: 768px)").matches;
   }
   const FRAME_COUNT = 241;
-  const GRID_HOLD = 7;      // فریم بوکه‌ی معرفی (هیرو)
+  const GRID_HOLD = 16;     // فریم هیرو: پس از فید-این، اولین قابِ روشن و پایدار
 
   const CHAPTERS = [
-    { from: 14,  to: 48  }, // ۱ سامورایی موج
-    { from: 50,  to: 96  }, // ۲ آنیمه مجنتا
-    { from: 100, to: 144 }, // ۳ هپی هورس
-    { from: 148, to: 188 }, // ۴ گرافیتی نئون
-    { from: 192, to: 240 }, // ۵ ساکورا شب
+    { from: 18,  to: 50  }, // ۱
+    { from: 51,  to: 98  }, // ۲
+    { from: 99,  to: 146 }, // ۳
+    { from: 147, to: 187 }, // ۴
+    { from: 188, to: 240 }, // ۵
   ];
-  // سهم اسکرول هر فصل (جمع = ۱) — متناسب با طول هر طرح در ریل
-  const CH_WEIGHTS = [0.16, 0.21, 0.21, 0.19, 0.23];
+  // سهم اسکرول هر فصل = متناسب با طول فریمی صحنه در سورس (سرعت اسکرول یکنواخت)
+  const CH_WEIGHTS = [0.145, 0.216, 0.216, 0.186, 0.237];
   const INTRO_END = 0.05;   // سهم هیروی ثابت (فریم بوکه)
-  const CH_FADE = 5;        // تعداد فریم فیدِ سیاه در ورود/خروج هر فصل (کاتِ سخت بین ماشین‌ها حذف می‌شود)
+  const CH_FADE = 0;        // گذرهای این کلیپ در خودِ سورس دیمری‌اند — فید سیاه اضافه لازم نیست
 
   const WA_NUMBER = "989196828013"; // شماره واقعی سایت wrapmode.ir
 
@@ -232,45 +232,16 @@
     return GRID_HOLD;
   }
 
-  // زیرلایه‌ی بلور ارزان: بوم ۴۸×۳۲ هر فریم فقط یک‌بار ساخته و کش می‌شود
-  const tinyCache = new WeakMap();
-  function tinyOf(img) {
-    let c = tinyCache.get(img);
-    if (!c) {
-      c = document.createElement("canvas");
-      c.width = 48; c.height = 32;
-      c.getContext("2d").drawImage(img, 0, 0, 48, 32);
-      tinyCache.set(img, c);
-    }
-    return c;
-  }
-
   function drawOne(img, zoom) {
     const cw = canvas.width, ch = canvas.height;
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
     if (!iw || !ih) return;
+    // «همه‌طرف فیکس»: کاور واقعی روی هر نسبت‌صفحه — بدون زیرلایه‌ی بلور، بدون نوار
     const cover = Math.max(cw / iw, ch / ih);
-    const contain = Math.min(cw / iw, ch / ih);
     const z = zoom || 1;
-
-    // «ماشین کامل»: بین contain و cover — عرض فریم ≥۹۲٪ و ارتفاع ≥۵۰٪ داخل کادر می‌ماند
-    const base = Math.max(contain, Math.min(cover, cw / (iw * 0.92), ch / (ih * 0.5)));
-    const scale = Math.min(base * z, cover * z);
-
-    if (scale >= cover * 0.985) {
-      // ویوپورت هم‌جهت با کلیپ: کاور تمام‌صفحه، لبه تیز
-      const dw = iw * scale, dh = ih * scale;
-      ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
-    } else {
-      // زیرلایه‌ی محو هم‌رنگ صحنه + فریم کامل وسط (هیچ لبه‌ای از ماشین بیرون نمی‌زند)
-      const timg = tinyOf(img);
-      const c = Math.max(cw / 48, ch / 32);
-      const bw = 48 * c, bh = 32 * c;
-      ctx.drawImage(timg, (cw - bw) / 2, (ch - bh) / 2, bw, bh);
-      const dw = iw * scale, dh = ih * scale;
-      ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
-    }
+    const dw = iw * cover * z, dh = ih * cover * z;
+    ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
   }
 
   // منحنی نرمِ وارد/خروج (slow-in/slow-out) — گذرها خطی نباشند، چشم «تق» را نمی‌بیند
@@ -279,9 +250,9 @@
     return s * s * (3 - 2 * s);
   };
 
-  // فیدِ بین‌فصلی: انتهای هر فصل به سیاه می‌رود، فصل بعدی از سیاه درمی‌آید (به‌جای کاتِ سخت)
-  // پروفیل smoothstep — لبه‌ی سیاهی نرم بالا و پایین می‌رود نه خطی
+  // فیدِ بین‌فصلی: خاموش در کلیپ ۰۰۷ (گذارها درون سورس دیمری‌اند) — فرمولِ CH_FADE برای کلیپ‌های بعدی می‌ماند
   function chapterFadeAlpha(fi) {
+    if (CH_FADE <= 0) return 0;
     let a = 0;
     for (let k = 0; k < CHAPTERS.length; k++) {
       const c = CHAPTERS[k];
