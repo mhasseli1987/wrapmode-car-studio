@@ -6,7 +6,11 @@
   // کلیپ: 720×1280 (۹:۱۶ عمودی)، ۲۴fps، ۲۴۱ فریم — ریل پنج‌طرحی جدید
   // 0-12 بوکه‌ی تاریک / 14-48 سامورایی موج / 50-96 آنیمه مجنتا / 100-144 هپی هورس / 148-188 گرافیتی نئون / 192-240 ساکورا شب
   // فریم‌های Enhance‌شده: حذف واترمارک (delogo) + Lanczos ۲× (1440×2560) + CAS 0.5 — بوم دسکتاپ downscale می‌نویسد، تیزتر
-  const FRAME_DIR = "frames4/";
+  const FRAME_DIR = isMobileEarly() ? "frames4m/" : "frames4/";
+  function isMobileEarly() {
+    // موبایل = فریم‌های ۷۲۰×۱۲۸۰ (۴ برابر سبک‌تر برای GPU گوشی) — بقیه با DPR و کش دیکد
+    return window.matchMedia("(max-width: 768px)").matches;
+  }
   const FRAME_COUNT = 241;
   const GRID_HOLD = 7;      // فریم بوکه‌ی معرفی (هیرو)
 
@@ -163,7 +167,9 @@
       for (let i = start; i < end; i++) jobs.push(loadOne(i));
       await Promise.all(jobs);
     }
-    scheduleIdleDecode();
+    // دیکد کامل پیش‌دستانه فقط دسکتاپ — روی موبایل ۲۴۱ بیت‌مپِ دیکدشده فشار رم می‌آورد
+    // و فریم‌های ۷۲۰p آن‌قدر سبک‌اند که decode پنجره‌ی prefetch حین اسکرول کافی است
+    if (!isMobile()) scheduleIdleDecode();
   }
 
   // دیکود آرام همه‌ی فریم‌ها در بیکاری — اسکرول هرگز روی دیکود سرد نمی‌ایستد
@@ -190,27 +196,9 @@
   }
 
   // ---------- بوم ----------
-  // نمونه‌گیری رنگ پس‌زمینه: یک بوم مشترک + حداقل ۱۵ فریم فاصله (getImageData سینک است)
-  let bgTint = "#0a0810";
-  let lastBgIdx = -99;
-  const bgCanvas = document.createElement("canvas");
-  bgCanvas.width = 2; bgCanvas.height = 2;
-  function sampleBg(i) {
-    if (i < 0 || Math.abs(i - lastBgIdx) < 15) return;
-    const img = frames[i];
-    if (!img) return;
-    lastBgIdx = i;
-    try {
-      const cx = bgCanvas.getContext("2d");
-      cx.drawImage(img, 0, 0, 2, 2);
-      const d = cx.getImageData(1, 1, 1, 1).data;
-      bgTint = `rgb(${d[0]},${d[1]},${d[2]})`;
-    } catch (e) { /* ساکت */ }
-  }
-
   // ---------- کیفیت تطبیقی: فریم‌تایم بالا رفت → فقط DPR پایین می‌آید ----------
   // بلندِ بین‌فریمی هرگز خاموش نمی‌شود — خاموشی‌اش همان «پله‌پله» است
-  let dprCap = isMobile() ? 2 : 1.5;
+  let dprCap = 1.5;
   let ftAvg = 16.7;
   let warm = 0;
 
@@ -231,7 +219,8 @@
     canvas.height = nextH;
     // بعد از تغییر ابعاد، تنظیمات کانتکست ریست می‌شوند
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
+    // موبایل: مقیاس ~۱:۱ است، «medium» غیرقابل‌تشخیص و محسوس ارزان‌تر
+    ctx.imageSmoothingQuality = isMobile() ? "medium" : "high";
   }
 
   function nearestLoaded(i) {
@@ -517,7 +506,6 @@
 
   function render() {
     const { idx } = timelineAt(smoothQ);
-    sampleBg(Math.round(idx));
     drawFrame(idx, ZOOM_OFF);
 
     // پرده‌ی تیره‌ی هیرو: فریم گرید عقب می‌نشیند تا کپی بخواند؛ با شروع اسکرول کنار می‌رود
@@ -998,7 +986,6 @@
     // یک رندر اولیه تا فریم هیرو قبل از لود کامل کشیده شود
     render();
     preload();
-    sampleBg(GRID_HOLD);
   }
 
   if (document.readyState === "loading") {

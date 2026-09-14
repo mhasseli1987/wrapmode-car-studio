@@ -548,6 +548,10 @@ body.scrubbing .grain { animation-play-state: paused; }
   .cards { grid-template-columns: 1fr; }
   .scroll-hint { bottom: 18px; }
   .made-by-enzo { height: 38px; }
+  /* GPU موبایل: گرین متحرک + بلور ۲۴px هدر روی بومِ تمام‌صفحه، هر دو با هم ~۴۰٪ افت فریم می‌گیرند */
+  .grain { display: none; }
+  .header-pill { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(5, 4, 8, 0.72); }
+  .btn.ghost { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
