@@ -4,6 +4,7 @@
 
   // ---------- پیکربندی ----------
   // کلیپ ۰۰۷: 720×1280 عمودی، ۲۴fps، ۲۴۱ فریم — پنج صحنه با گذرهای فید-سیاه درون‌خودِ کلیپ
+  // دسکتاپ frames5 = 1152×2048 q78 (مجموع ۲۲MB — برای لینک‌های کند؛ درگاه هیرو ۰٫۶MB)
   // 0-16 فید-این تدریجی (بوکه) / 20-49 صحنهٔ ۱ / 50-97 صحنهٔ ۲ / 98-145 صحنهٔ ۳ / 146-185 صحنهٔ ۴ / 186-240 صحنهٔ ۵ (روشن‌ترین)
   // مرزها از پروفایل روشنایی پیکسلی: فرورفتگی‌های mean در 50/98/146/187 = کات‌های نرم سورس
   const FRAME_DIR = isMobileEarly() ? "frames5m/" : "frames5/";
@@ -141,52 +142,54 @@
     if (loaderPercent) loaderPercent.textContent = p + "٪";
   }
 
+  const requesting = new Set(); // درخواست در راه — از دانلود تکراری همان فریم جلوگیری می‌کند
+
   function loadOne(i) {
-    if (frames[i]) return Promise.resolve();
+    if (frames[i] || requesting.has(i)) return Promise.resolve();
+    requesting.add(i);
     return new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => { frames[i] = img; loaded++; updateLoader(); resolve(); };
-      img.onerror = () => { loaded++; updateLoader(); resolve(); };
+      img.onload = () => {
+        frames[i] = img; requesting.delete(i); loaded++; updateLoader();
+        // دیکد بلافاصله پس از دانلود — کشیدنِ فریمِ سرد هرگز وسط اسکرول تپق نمی‌زند
+        if (img.decode) { decodeSet.add(img); img.decode().catch(() => {}); }
+        resolve();
+      };
+      img.onerror = () => { requesting.delete(i); loaded++; updateLoader(); resolve(); };
       img.src = path(i);
     });
   }
 
-  const READY_AT = Math.min(isMobile() ? 20 : 26, FRAME_COUNT);
+  const HERO_LAST = GRID_HOLD;        // فریم‌های هیرو (فید-این + قاب پایدار) باید قبل از رفع لودر باشند
   let loaderHidden = false;
 
   async function preload() {
     const firstJobs = [];
-    for (let i = 0; i < READY_AT; i++) firstJobs.push(loadOne(i));
+    for (let i = 0; i <= HERO_LAST; i++) firstJobs.push(loadOne(i));
     await Promise.all(firstJobs);
     hideLoader();
     drawFrame(GRID_HOLD);
-    const batch = isMobile() ? 10 : 20;
-    for (let start = READY_AT; start < FRAME_COUNT; start += batch) {
-      const end = Math.min(start + batch, FRAME_COUNT);
-      const jobs = [];
-      for (let i = start; i < end; i++) jobs.push(loadOne(i));
-      await Promise.all(jobs);
-    }
-    // دیکد کامل پیش‌دستانه فقط دسکتاپ — روی موبایل ۲۴۱ بیت‌مپِ دیکدشده فشار رم می‌آورد
-    // و فریم‌های ۷۲۰p آن‌قدر سبک‌اند که decode پنجره‌ی prefetch حین اسکرول کافی است
+    // بقیه‌ی فریم‌ها دیگر پشت‌سرهم دانلود نمی‌شوند — «پنجره‌ی دور بازیکن» در prefetchAround
+    // تقاضا-محور می‌گیرد و حلقه‌ی idle فقط بیکاری‌ها را گرم می‌کند.
+    // گرم‌کردن بیکاری فقط دسکتاپ؛ روی موبایل همان پنجره‌ی prefetch کافی است و مصرف داده کنترل می‌شود
     if (!isMobile()) scheduleIdleDecode();
   }
 
-  // دیکود آرام همه‌ی فریم‌ها در بیکاری — اسکرول هرگز روی دیکود سرد نمی‌ایستد
+  // گرم‌کردن تدریجی در بیکاری: چند فریم جلوترِ بازیکن را می‌خواند (نه به‌ترتیب خطی)،
+  // پس هرگز پهنای باند را جلوی اسکرول کاربر نمی‌گیرد
   let idleCursor = 0;
   function idleDecodeStep() {
-    if (idleCursor >= FRAME_COUNT) return;
-    const img = frames[idleCursor++];
-    if (img && img.decode && !decodeSet.has(img)) {
-      decodeSet.add(img);
-      img.decode().catch(() => {});
+    let sent = 0;
+    while (idleCursor < FRAME_COUNT && sent < 4) {
+      const i = idleCursor++;
+      if (!frames[i] && !requesting.has(i)) { loadOne(i); sent++; }
     }
+    if (idleCursor >= FRAME_COUNT) return;
     scheduleIdleDecode();
   }
   function scheduleIdleDecode() {
-    if (idleCursor >= FRAME_COUNT) return;
-    if ("requestIdleCallback" in window) requestIdleCallback(idleDecodeStep, { timeout: 300 });
-    else setTimeout(idleDecodeStep, 16);
+    if ("requestIdleCallback" in window) requestIdleCallback(idleDecodeStep, { timeout: 400 });
+    else setTimeout(idleDecodeStep, 60);
   }
 
   function hideLoader() {
@@ -456,13 +459,14 @@
   let lastPrefetchIdx = -999;
 
   function prefetchAround(idx) {
-    if (Math.abs(idx - lastPrefetchIdx) < 6) return;
+    if (Math.abs(idx - lastPrefetchIdx) < 4) return;
     lastPrefetchIdx = idx;
-    for (let k = -8; k <= 18; k++) {
+    for (let k = -6; k <= 22; k++) {
       const j = idx + k;
       if (j < 0 || j >= FRAME_COUNT) continue;
       const img = frames[j];
-      if (img && !decodeSet.has(img) && img.decode) {
+      if (!img) { loadOne(j); continue; }         // تقاضا-محور: فریمِ بازیکنِ نaloadیده فوراً دانلود می‌شود
+      if (!decodeSet.has(img) && img.decode) {     // و دیکدش پیش از کشیدن
         decodeSet.add(img);
         img.decode().catch(() => {});
       }
