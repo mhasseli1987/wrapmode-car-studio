@@ -820,6 +820,7 @@
     else cartState.push({ car, qty: 1 });
     saveCart();
     renderCart();
+    openCart(); // آیکون هدر حالا به سبد سایت اصلی می‌رود؛ درِ سبد محلی = همین دکمهٔ افزودن
     if (!btn) return;
     btn.textContent = t("_added");
     btn.classList.add("added");
@@ -843,10 +844,9 @@
   }
 
   function initCart() {
-    const openBtn = document.getElementById("cart-open-btn");
+    // آیکون سبد هدر از این نسخه لینک مستقیم /cart/ سایت اصلی است — دیگر درِ سبد محلی را باز نمی‌کند
     const closeBtn = document.getElementById("cart-close-btn");
     const backdrop = document.getElementById("cart-backdrop");
-    if (openBtn) openBtn.addEventListener("click", openCart);
     if (closeBtn) closeBtn.addEventListener("click", closeCart);
     if (backdrop) backdrop.addEventListener("click", closeCart);
     document.addEventListener("keydown", (e) => {
