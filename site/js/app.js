@@ -113,7 +113,7 @@
   if (!prefersReducedMotion && typeof Lenis !== "undefined") {
     try {
       lenis = new Lenis({
-        lerp: isMobile() ? 0.14 : 0.1,
+        lerp: isMobile() ? 0.12 : 0.085,
         smoothWheel: true,
         syncTouch: false,
         wheelMultiplier: isMobile() ? 0.9 : 1,
@@ -284,18 +284,25 @@
     }
   }
 
+  // منحنی نرمِ وارد/خروج (slow-in/slow-out) — گذرها خطی نباشند، چشم «تق» را نمی‌بیند
+  const smooth01 = (u) => {
+    const s = u < 0 ? 0 : u > 1 ? 1 : u;
+    return s * s * (3 - 2 * s);
+  };
+
   // فیدِ بین‌فصلی: انتهای هر فصل به سیاه می‌رود، فصل بعدی از سیاه درمی‌آید (به‌جای کاتِ سخت)
+  // پروفیل smoothstep — لبه‌ی سیاهی نرم بالا و پایین می‌رود نه خطی
   function chapterFadeAlpha(fi) {
     let a = 0;
     for (let k = 0; k < CHAPTERS.length; k++) {
       const c = CHAPTERS[k];
       if (k < CHAPTERS.length - 1) {
         const dout = c.to - fi;
-        if (dout >= 0 && dout <= CH_FADE) a = Math.max(a, 1 - dout / CH_FADE);
+        if (dout >= 0 && dout <= CH_FADE) a = Math.max(a, 1 - smooth01(dout / CH_FADE));
         if (fi > c.to && fi < CHAPTERS[k + 1].from) return 1; // گپ سورس بین دو فصل
       }
       const din = fi - c.from;
-      if (din >= 0 && din <= CH_FADE) a = Math.max(a, 1 - din / CH_FADE);
+      if (din >= 0 && din <= CH_FADE) a = Math.max(a, 1 - smooth01(din / CH_FADE));
     }
     return Math.min(1, a);
   }
@@ -333,6 +340,8 @@
 
   // ---------- تایم‌لاین: یک take پیوسته، ۵ فصل ----------
   // خروجی idx اعشاری است — drawFrame بین دو فریم مجاور بلند می‌کند
+  // local با خمیرِ ملایم slow-in/slow-out صاف می‌شود: دورِ مرز فصل‌ها (محل فید) حرکت آرام‌تر است
+  const easeLocal = (u) => u * 0.55 + smooth01(u) * 0.45;
   function timelineAt(x) {
     if (x <= INTRO_END) return { idx: GRID_HOLD, cap: -1, local: 0 };
     const t = Math.min(1, (x - INTRO_END) / (1 - INTRO_END));
@@ -342,7 +351,7 @@
       if (t <= acc + w || k === CHAPTERS.length - 1) {
         const local = Math.min(1, Math.max(0, (t - acc) / w));
         const c = CHAPTERS[k];
-        return { idx: c.from + local * (c.to - c.from), cap: k, local };
+        return { idx: c.from + easeLocal(local) * (c.to - c.from), cap: k, local };
       }
       acc += w;
     }
@@ -392,7 +401,7 @@
       let tl = null;
       if (typeof gsap !== "undefined" && kids.length) {
         tl = gsap.timeline({ paused: true });
-        tl.fromTo(kids, { opacity: 0, y: 12 }, { opacity: 1, y: 0, stagger: 0.08, duration: 0.5, ease: "power2.out" });
+        tl.fromTo(kids, { opacity: 0, y: 12 }, { opacity: 1, y: 0, stagger: 0.1, duration: 0.55, ease: "power3.out" });
       }
       return {
         el,
@@ -434,8 +443,8 @@
       if (state === "in") {
         const span = Math.max(d.leave - d.enter, 0.001);
         const p = Math.min(1, (x - d.enter) / span);
-        // دریفت مویی با پیشروی فصل — کپشن مثل تایتل‌کارت فیلم آرام بالا می‌رود
-        const drift = ((0.5 - p) * 26).toFixed(1);
+        // دریفت مویی با خم آرام — کپشن مثل تایتل‌کارت فیلم بدون شتاب خطی بالا می‌رود
+        const drift = ((0.5 - smooth01(p)) * 26).toFixed(1);
         if (drift !== d._drift) {
           d._drift = drift;
           d.el.style.setProperty("--drift", `${drift}px`);
@@ -456,7 +465,8 @@
   let lastHeaderScrolled = false;
 
   function syncHero(x) {
-    const fade = Math.max(0, 1 - x * 18);
+    // محویِ کپی با خم smoothstep — قطعِ تیزِ خطی در ابتدای اسکرول حس «پرش» می‌دهد
+    const fade = 1 - smooth01(x * 18);
     if (fade !== lastHeroFade) {
       lastHeroFade = fade;
       const str = String(fade);
@@ -662,9 +672,9 @@
         revealIO.unobserve(en.target);
         gsap.to(en.target, {
           opacity: 1, y: 0,
-          duration: 0.65,
+          duration: 0.7,
           delay: (parseFloat(en.target.dataset.revIdx) || 0) * 0.09,
-          ease: "power2.out",
+          ease: "power3.out",
           clearProps: "transform",
         });
       });
@@ -924,7 +934,7 @@
     if (!window.matchMedia("(pointer: fine)").matches) return;
     const dot = document.getElementById("cursor");
     if (!dot) return;
-    let mx = -100, my = -100, cx = -100, cy = -100, seen = false;
+    let mx = -100, my = -100, cx = -100, cy = -100, seen = false, lastT = 0;
     window.addEventListener("mousemove", (e) => {
       mx = e.clientX; my = e.clientY;
       if (!seen) { seen = true; cx = mx; cy = my; dot.style.opacity = "1"; }
@@ -934,9 +944,14 @@
       dot.style.transform = `translate(-50%, -50%) scale(${hot ? 2.4 : 1})`;
       dot.style.transition = "transform 0.18s ease";
     });
-    gsap.ticker.add(() => {
-      cx += (mx - cx) * 0.22;
-      cy += (my - cy) * 0.22;
+    gsap.ticker.add((time) => {
+      // میرایی وابسته به زمان واقعی: روی ۱۲۰Hz همان حسِ ۶۰Hz (سرِ کشیده‌تر و نرم‌تر)
+      let dt = lastT ? (time - lastT) : 1 / 60;
+      if (dt > 1 / 30) dt = 1 / 30;
+      lastT = time;
+      const a = 1 - Math.exp(-dt * 14);
+      cx += (mx - cx) * a;
+      cy += (my - cy) * a;
       dot.style.left = cx + "px";
       dot.style.top = cy + "px";
     });

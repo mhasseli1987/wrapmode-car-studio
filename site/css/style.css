@@ -298,7 +298,7 @@ body.scrubbing .grain { animation-play-state: paused; }
   padding: 0 6vw;
   visibility: hidden;
   opacity: 0;
-  transition: opacity 0.45s ease;
+  transition: opacity 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
   will-change: transform, opacity;
   text-shadow: 0 2px 26px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.9);
 }
@@ -436,32 +436,39 @@ body.scrubbing .grain { animation-play-state: paused; }
   background: var(--bg2);
   border-top: 1px solid var(--hairline);
   text-align: center;
-  padding: clamp(64px, 11vh, 110px) clamp(20px, 5vw, 48px) 110px;
+  padding: clamp(64px, 11vh, 110px) clamp(20px, 5vw, 48px) 56px;
 }
 /* وردمارک بزرگ نیمه‌شفاف — وسط فوتر، مثل واترمارک سینمایی */
 .foot-logo {
   font-family: var(--font-display);
-  font-size: clamp(3rem, 10.5vw, 7.2rem);
+  font-size: clamp(2.1rem, 10.5vw, 7.2rem);
   letter-spacing: 0.26em; text-indent: 0.26em;
   line-height: 1;
   color: var(--ink);
   opacity: 0.78;
   white-space: nowrap;
+  overflow-wrap: normal;
 }
 .foot-line {
   width: clamp(110px, 18vw, 180px); height: 1px;
   background: linear-gradient(90deg, transparent, var(--accent), transparent);
   margin: clamp(26px, 5vh, 44px) auto;
 }
-/* ردیف لوگوها — گوشهٔ پایین */
+/* امضای ENZO — وسط پایین فوتر */
 .foot-meta {
-  position: absolute; bottom: 26px; left: clamp(20px, 4vw, 44px);
-  display: flex; align-items: center; gap: 18px;
+  display: flex; justify-content: center; align-items: center; gap: 18px;
   color: var(--mut); font-size: 0.72rem;
   letter-spacing: 0.14em;
 }
-.made-by-enzo { height: 38px; mix-blend-mode: screen; opacity: 0.92; }
-.foot-social { display: flex; gap: 16px; }
+.made-by-enzo {
+  height: 48px; mix-blend-mode: screen; opacity: 1;
+  filter: brightness(1.12) contrast(1.18);
+}
+/* لوگوهای اجتماعی — گوشهٔ پایینِ راست */
+.foot-social {
+  position: absolute; right: clamp(20px, 4vw, 44px); bottom: 24px;
+  display: flex; gap: 16px;
+}
 .foot-social a { color: var(--mut); transition: color 0.2s; display: inline-flex; }
 .foot-social a:hover { color: var(--accent); }
 
@@ -540,7 +547,7 @@ body.scrubbing .grain { animation-play-state: paused; }
   .cap { bottom: auto; padding: 0 5vw; }
   .cards { grid-template-columns: 1fr; }
   .scroll-hint { bottom: 18px; }
-  .made-by-enzo { height: 30px; }
+  .made-by-enzo { height: 38px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
