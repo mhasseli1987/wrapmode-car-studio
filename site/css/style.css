@@ -13,7 +13,7 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { scroll-behavior: auto; }
+html { scroll-behavior: auto; background: var(--bg); }
 
 body {
   background: var(--bg);
@@ -273,7 +273,9 @@ body.scrubbing .grain { animation-play-state: paused; }
 
 /* ---------- بوم ---------- */
 .canvas-wrap {
-  position: fixed; inset: 0; z-index: 1;
+  position: fixed; top: 0; right: 0; left: 0; z-index: 1;
+  /* ارتفاع قفل روی ویوپورت بزرگ (lvh): جمع‌شدن نوار آدرسِ موبایل وسط اسکرول، قاب ویدیو را ری‌اسکین و «تکان» نمی‌دهد */
+  height: 100vh; height: 100lvh;
   background: var(--bg);
   /* لایه‌ی مستقل کامپوزیت تا اسکرول هرگز منتظر ری‌پیینت بوم نماند */
   transform: translateZ(0);
@@ -289,7 +291,9 @@ body.scrubbing .grain { animation-play-state: paused; }
 #canvas { width: 100%; height: 100%; display: block; }
 
 /* ---------- استیج اسکراب و کپشن‌ها ---------- */
-#scrub-stage { position: relative; height: 640vh; z-index: 20; }
+/* ارتفاع با lvh قفل می‌شود (بزرگ‌ترین حالت ویوپورت) تا جمع‌شدن نوار آدرسِ موبایل
+   طول تایم‌لاین را وسط اسکرول عوض نکند — همان چیزی که باعث «سینک نبودن» بود */
+#scrub-stage { position: relative; height: 640vh; height: 640lvh; z-index: 20; }
 
 .cap {
   position: absolute; right: 0; left: 0;
@@ -542,7 +546,7 @@ body.scrubbing .grain { animation-play-state: paused; }
 
 /* ---------- موبایل ---------- */
 @media (max-width: 768px) {
-  #scrub-stage { height: 560vh; }
+  #scrub-stage { height: 560vh; height: 560lvh; }
   .hero-title { font-size: clamp(2rem, 9vw, 2.8rem); }
   .cap { bottom: auto; padding: 0 5vw; }
   .cards { grid-template-columns: 1fr; }

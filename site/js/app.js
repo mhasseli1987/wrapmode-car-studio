@@ -98,6 +98,9 @@
   const loaderPercent = document.getElementById("loader-percent");
   const canvas = document.getElementById("canvas");
   const canvasWrap = document.getElementById("canvas-wrap");
+  // ارتفاع ویوپورتِ قفل‌شده: canvas-wrap با ۱۰۰lvh در CSS اندازه‌گیری می‌شود؛ جمع/باز شدن
+  // نوار آدرس موبایل نباید نقشه‌ی اسکرول→فریم را وسط راه عوض کند («سینک نبودن» همین بود)
+  const stableVh = () => (canvasWrap && canvasWrap.clientHeight) || window.innerHeight;
   const stage = document.getElementById("scrub-stage");
   const heroCopy = document.querySelector(".hero-copy");
   const scrollHint = document.getElementById("scroll-hint");
@@ -171,8 +174,9 @@
     drawFrame(GRID_HOLD);
     // بقیه‌ی فریم‌ها دیگر پشت‌سرهم دانلود نمی‌شوند — «پنجره‌ی دور بازیکن» در prefetchAround
     // تقاضا-محور می‌گیرد و حلقه‌ی idle فقط بیکاری‌ها را گرم می‌کند.
-    // گرم‌کردن بیکاری فقط دسکتاپ؛ روی موبایل همان پنجره‌ی prefetch کافی است و مصرف داده کنترل می‌شود
-    if (!isMobile()) scheduleIdleDecode();
+    // روی موبایل هم گرم می‌شود (فریم‌های ۷۲۰p سبک‌اند) — اسکرول سریعِ انگشتی
+    // پنجره‌ی prefetch را از پشت سر می‌زند و بدون پیش‌بارگذاری «فریم دیررس» همان کجیِ محسوس است
+    scheduleIdleDecode();
   }
 
   // گرم‌کردن تدریجی در بیکاری: چند فریم جلوترِ بازیکن را می‌خواند (نه به‌ترتیب خطی)،
@@ -326,7 +330,7 @@
   let scrubLen = 1;
 
   function measureStage() {
-    scrubLen = Math.max(1, stage.offsetHeight - window.innerHeight);
+    scrubLen = Math.max(1, stage.offsetHeight - stableVh());
   }
 
   function chapterRanges() {
@@ -343,7 +347,9 @@
     measureStage();
     const ranges = chapterRanges();
     // روی موبایل کپشن کمی پایین‌تر می‌نشیند تا روی کابین ماشین نیفتد
-    const drop = isMobile() ? window.innerHeight * 0.19 : 0;
+    // (همه با stableVh — مرکزِ بومِ قفل‌شده، نه ویوپورتِ لرزانِ موبایل)
+    const vh = stableVh();
+    const drop = isMobile() ? vh * 0.19 : 0;
     capDrivers.forEach((d, k) => {
       const range = ranges[k];
       if (!range) return;
@@ -352,7 +358,7 @@
       const isLast = k === CHAPTERS.length - 1;
       const leave = isLast ? 1.0 : s + (e - s) * 0.84;
       const mid = (enter + leave) / 2;
-      d.el.style.top = `${mid * scrubLen + window.innerHeight / 2 + drop}px`;
+      d.el.style.top = `${mid * scrubLen + vh / 2 + drop}px`;
       d.enter = enter;
       d.leave = leave;
     });
