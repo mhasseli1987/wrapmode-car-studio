@@ -771,6 +771,13 @@
     const total = cartState.reduce((s, it) => s + (DESIGNS[it.car] ? DESIGNS[it.car].price * it.qty : 0), 0);
     if (cartTotalEl) cartTotalEl.textContent = `${faNum(total)} ${t("_toman")}`;
 
+    // همگام‌سازی دکمه‌های Add — طرحی که در سبد هست زرد می‌ماند («Added ✓»)
+    document.querySelectorAll(".card-add").forEach((b) => {
+      const inCart = cartState.some((it) => it.car === Number(b.dataset.design));
+      b.classList.toggle("added", inCart);
+      b.textContent = inCart ? t("_added") : t("_add");
+    });
+
     // پیام واتساپ همیشه فارسی می‌ماند (گیرنده‌ی فروشگاه)
     const lines = cartState.filter((it) => DESIGNS[it.car]).map((it) => {
       const d = DESIGNS[it.car];
@@ -789,14 +796,8 @@
     else cartState.push({ car, qty: 1 });
     saveCart();
     renderCart();
-    openCart(); // آیکون هدر حالا به سبد سایت اصلی می‌رود؛ درِ سبد محلی = همین دکمهٔ افزودن
-    if (!btn) return;
-    btn.textContent = t("_added");
-    btn.classList.add("added");
-    setTimeout(() => {
-      btn.textContent = t("_add");
-      btn.classList.remove("added");
-    }, 1600);
+    // کشو باز نمی‌شود — فقط آیتم به سبدِ بالای صفحه اضافه می‌شود؛
+    // وضعیت دکمه (زرد = در سبد) در renderCart همگام می‌شود
   }
 
   function openCart() {
@@ -813,9 +814,11 @@
   }
 
   function initCart() {
-    // آیکون سبد هدر از این نسخه لینک مستقیم /cart/ سایت اصلی است — دیگر درِ سبد محلی را باز نمی‌کند
+    // آیکون سبد هدر حالا سبدِ همین سایت را باز می‌کند (دیگر لینک wrapmode.ir نیست)
+    const openBtn = document.getElementById("cart-open-btn");
     const closeBtn = document.getElementById("cart-close-btn");
     const backdrop = document.getElementById("cart-backdrop");
+    if (openBtn) openBtn.addEventListener("click", openCart);
     if (closeBtn) closeBtn.addEventListener("click", closeCart);
     if (backdrop) backdrop.addEventListener("click", closeCart);
     document.addEventListener("keydown", (e) => {

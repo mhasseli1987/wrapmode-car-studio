@@ -413,7 +413,8 @@ body.scrubbing .grain { animation-play-state: paused; }
   transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
 }
 .card-add:hover { background: var(--accent); color: var(--bg); box-shadow: 0 6px 18px rgba(201, 162, 94, 0.28); }
-.card-add.added { background: #3d7a52; border-color: #3d7a52; color: #eafff2; }
+/* طرح داخل سبد — زردِ همان سبد هدر، دائمی تا حذف از سبد */
+.card-add.added { background: #FBBF24; border-color: #FBBF24; color: #000; font-weight: 700; box-shadow: 0 6px 18px rgba(251, 191, 36, 0.3); }
 
 /* آمار */
 .stats {
