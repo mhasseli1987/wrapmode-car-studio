@@ -3,31 +3,32 @@
   "use strict";
 
   // ---------- پیکربندی ----------
-  // ریل NEW SEASON: 1080×1920 عمودی، 30fps، ۱۵ ثانیه — استخراج ۱:۱ با سورس (۴۵۰ فریم @30fps)
-  // (نسخهٔ قبلی ۲۴۰ فریم @16fps بود — نصف نم‌های زمانی سورس، همان پله‌پلهٔ اسکرول)
-  // دسکتاپ frames6 = 1152×2048 q78 (~۵۲MB) / موبایل frames6m = 720×1280 q75 (~۳۲MB) — تقاضا-محور
-  // 0-89 کارت تایتل NEW SEASON / 90-189 سامورایی موج روی BMW E46 / 191-266 آنیمه مجنتا روی E46
-  // 268-352 سوپرای GR با لوری مسابقه‌ای / 354-448 کارت پایانی WRAPMODE (لوگو + Pick your wrap)
-  // مرزها از scene-detect سورس (کات‌ها در ۲٫۹۷s / ۸٫۹۳s / ۱۱٫۸s) + بازبینی فریمی وایپ مورب
-  // کپشن‌های سفیدِ پایینِ سورس با دیلوگو حین استخراج پاک شده‌اند
-  const FRAME_DIR = isMobileEarly() ? "frames6m/" : "frames6/";
+  // ریل گاراژ: 1080×1920 عمودی، 30fps، ۱۷٫۵ ثانیه — استخراج ۱:۱ با سورس (۵۲۴ فریم @30fps)
+  // دسکتاپ frames7 = 1152×2048 q78 / موبایل frames7m = 720×1280 q75 — تقاضا-محور
+  // 1-56 کناررفتن روکش M4 / 57-175 دو لوک فصل (کامو سوپرا + کلوئن کوپه) / 176-350 کارِ نصب
+  // (نمای گاراژ، لایه‌فویل، اسکوییج، وایپ شلاقی) / 351-403 سامورایی موج روی E46 / 404-523
+  // گرافیتی سوپرا + اوترو M4 — ریل با همان ماشینِ هیرو بسته می‌شود (حس حلقه)
+  // مرزها از scene-detect سورس: کات‌ها در ۱٫۹ / ۳٫۹ / ۵٫۸۷ / ۷٫۴۳ / ۹٫۴۳ / ۱۱٫۷ / ۱۳٫۴۷ / ۱۴٫۸ / ~۱۶٫۸ ثانیه
+  // سورس هیچ نوشته یا لوگوی داخلی ندارد — پاک‌سازی لازم نشد
+  const FRAME_DIR = isMobileEarly() ? "frames7m/" : "frames7/";
   function isMobileEarly() {
     // موبایل = فریم‌های ۷۲۰×۱۲۸۰ (سبک‌تر برای GPU گوشی) — بقیه با DPR و کش دیکد
     return window.matchMedia("(max-width: 768px)").matches;
   }
-  const FRAME_COUNT = 450;
-  const GRID_HOLD = 30;     // فریم هیرو: قاب تایتل NEW SEASON (t=1s — کارت از فریم ۰ کامل است)
+  const FRAME_COUNT = 524;
+  const GRID_HOLD = 0;      // فریم هیرو: M4 زیر روکش سیاه — اسکرول یعنی کنار رفتن روکش
 
   const CHAPTERS = [
-    { from: 90,  to: 189 }, // سامورایی موج
-    { from: 191, to: 266 }, // آنیمه مجنتا
-    { from: 268, to: 352 }, // سوپرای GR
-    { from: 354, to: 448 }, // کارت پایانی (بدون کپشن — لوگوی خودش حرف می‌زند)
+    { from: 1,   to: 56 },  // کناررفتن روکش (بدون کپشن — تیتر هیرو روی تصویر است)
+    { from: 57,  to: 175 }, // دو لوک فصل: کامو سوپرا + کلوئن کوپه
+    { from: 176, to: 350 }, // کارِ نصب: گاراژ، لایه‌فویل، اسکوییج
+    { from: 351, to: 403 }, // سامورایی موج روی E46
+    { from: 404, to: 523 }, // گرافیتی سوپرا + اوترو M4
   ];
   // سهم اسکرول هر فصل = متناسب با طول فریمی صحنه در سورس (سرعت اسکرول یکنواخت)
-  const CH_WEIGHTS = [0.281, 0.213, 0.239, 0.267];
-  const INTRO_END = 0.05;   // سهم هیروی ثابت (فریم تایتل)
-  const CH_FADE = 0;        // گذرهای این ریل وایپ موربِ درونِ سورس‌اند — فید سیاه اضافه لازم نیست
+  const CH_WEIGHTS = [0.107, 0.228, 0.334, 0.101, 0.230];
+  const INTRO_END = 0.05;   // سهم هیروی ثابت (فریم روکش)
+  const CH_FADE = 0;        // گذرها کات/وایپِ درونِ سورس‌اند — فید سیاه اضافه لازم نیست
 
   const WA_NUMBER = "989196828013"; // شماره واقعی سایت wrapmode.ir
 
@@ -152,8 +153,8 @@
   const frames = new Array(FRAME_COUNT).fill(null);
   const decodeSet = new WeakSet(); // باید قبل از اولین استفاده تعریف شود (idleDecodeStep / prefetchAround)
   let loaded = 0;
-  // ?v=3: فریم‌ها با ۳۰فریم‌برثانیه و نام‌های هم‌پوشان بازتولید شدند — کش مرورگر کهنه را نمی‌سپارد
-  const path = (i) => `${FRAME_DIR}f_${String(i + 1).padStart(4, "0")}.webp?v=3`;
+  // ?v=4: ریل گاراژ — دایرکتوری نو (frames7) + نسخ نو، کش مرورگر کهنه را نمی‌سپارد
+  const path = (i) => `${FRAME_DIR}f_${String(i + 1).padStart(4, "0")}.webp?v=4`;
 
   function updateLoader() {
     const p = Math.round((loaded / FRAME_COUNT) * 100);
@@ -184,8 +185,7 @@
 
   async function preload() {
     const firstJobs = [];
-    // فقط قاب هیرو + چند فریم جلوتر — فریم‌های ۰ تا GRID_HOLD−۱ هرگز نمایش داده نمی‌شوند
-    // (تایم‌لاین زیر INTRO_END روی GRID_HOLD قفل است) و بارگیری‌شان فقط لودر را کند می‌کند
+    // قاب هیرو (روکش) + چند فریم جلوتر — خودِ کشیدنِ روکش اولین حرکتِ اسکرول است
     for (let i = GRID_HOLD; i <= HERO_LAST + 6; i++) firstJobs.push(loadOne(i));
     await Promise.all(firstJobs);
     hideLoader();
@@ -199,7 +199,6 @@
 
   // گرم‌کردن تدریجی در بیکاری: چند فریم جلوترِ بازیکن را می‌خواند (نه به‌ترتیب خطی)،
   // پس هرگز پهنای باند را جلوی اسکرول کاربر نمی‌گیرد
-  // شروع از GRID_HOLD: فریم‌های پیش از قاب هیرو در تایم‌لاین این ریل هرگز دیده نمی‌شوند
   let idleCursor = GRID_HOLD;
   function idleDecodeStep() {
     let sent = 0;
@@ -369,13 +368,13 @@
     // (همه با stableVh — مرکزِ بومِ قفل‌شده، نه ویوپورتِ لرزانِ موبایل)
     const vh = stableVh();
     const drop = isMobile() ? vh * 0.19 : 0;
-    capDrivers.forEach((d, k) => {
-      const range = ranges[k];
+    capDrivers.forEach((d) => {
+      const range = ranges[d.k];
       if (!range) return;
       const [s, e] = range;
       const enter = s + (e - s) * 0.16;
-      const isLast = k === CHAPTERS.length - 1;
-      const leave = isLast ? 1.0 : s + (e - s) * 0.84;
+      // خروج در ۸۴٪ فصل — حتی کپشن آخر: اوتروی M4 (پایان ریل) باید بدون کپشن بماند
+      const leave = s + (e - s) * 0.84;
       const mid = (enter + leave) / 2;
       d.el.style.top = `${mid * scrubLen + vh / 2 + drop}px`;
       d.enter = enter;
@@ -393,6 +392,8 @@
       }
       return {
         el,
+        // data-cap = اندیس فصل — کپشن لزوماً برای همهٔ فصل‌ها نیست (فصل روکش بی‌کپشن است)
+        k: parseInt(el.dataset.cap, 10),
         tl,
         enter: 0,
         leave: 1,
