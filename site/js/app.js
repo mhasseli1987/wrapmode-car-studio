@@ -3,27 +3,29 @@
   "use strict";
 
   // ---------- پیکربندی ----------
-  // ریل NEW SEASON: 1080×1920 عمودی، 30fps، ۱۵ ثانیه (۴۵۰ فریم سورس → ۲۴۰ فریم @16fps)
-  // دسکتاپ frames6 = 1152×2048 q78 (۳۰MB) / موبایل frames6m = 720×1280 q75 (۱۷MB)
-  // 0-47 کارت تایتل NEW SEASON / 48-101 سامورایی موج روی BMW E46 / 102-142 آنیمه مجنتا روی E46
-  // 143-188 سوپرای GR با لوری مسابقه‌ای / 189-239 کارت پایانی WRAPMODE (لوگو + Pick your wrap)
+  // ریل NEW SEASON: 1080×1920 عمودی، 30fps، ۱۵ ثانیه — استخراج ۱:۱ با سورس (۴۵۰ فریم @30fps)
+  // (نسخهٔ قبلی ۲۴۰ فریم @16fps بود — نصف نم‌های زمانی سورس، همان پله‌پلهٔ اسکرول)
+  // دسکتاپ frames6 = 1152×2048 q78 (~۵۲MB) / موبایل frames6m = 720×1280 q75 (~۳۲MB) — تقاضا-محور
+  // 0-89 کارت تایتل NEW SEASON / 90-189 سامورایی موج روی BMW E46 / 191-266 آنیمه مجنتا روی E46
+  // 268-352 سوپرای GR با لوری مسابقه‌ای / 354-448 کارت پایانی WRAPMODE (لوگو + Pick your wrap)
   // مرزها از scene-detect سورس (کات‌ها در ۲٫۹۷s / ۸٫۹۳s / ۱۱٫۸s) + بازبینی فریمی وایپ مورب
+  // کپشن‌های سفیدِ پایینِ سورس با دیلوگو حین استخراج پاک شده‌اند
   const FRAME_DIR = isMobileEarly() ? "frames6m/" : "frames6/";
   function isMobileEarly() {
-    // موبایل = فریم‌های ۷۲۰×۱۲۸۰ (۴ برابر سبک‌تر برای GPU گوشی) — بقیه با DPR و کش دیکد
+    // موبایل = فریم‌های ۷۲۰×۱۲۸۰ (سبک‌تر برای GPU گوشی) — بقیه با DPR و کش دیکد
     return window.matchMedia("(max-width: 768px)").matches;
   }
-  const FRAME_COUNT = 240;
-  const GRID_HOLD = 16;     // فریم هیرو: قاب تایتل NEW SEASON (کارت از فریم ۰ کامل است)
+  const FRAME_COUNT = 450;
+  const GRID_HOLD = 30;     // فریم هیرو: قاب تایتل NEW SEASON (t=1s — کارت از فریم ۰ کامل است)
 
   const CHAPTERS = [
-    { from: 48,  to: 101 }, // سامورایی موج
-    { from: 102, to: 142 }, // آنیمه مجنتا
-    { from: 143, to: 188 }, // سوپرای GR
-    { from: 189, to: 239 }, // کارت پایانی (بدون کپشن — لوگوی خودش حرف می‌زند)
+    { from: 90,  to: 189 }, // سامورایی موج
+    { from: 191, to: 266 }, // آنیمه مجنتا
+    { from: 268, to: 352 }, // سوپرای GR
+    { from: 354, to: 448 }, // کارت پایانی (بدون کپشن — لوگوی خودش حرف می‌زند)
   ];
   // سهم اسکرول هر فصل = متناسب با طول فریمی صحنه در سورس (سرعت اسکرول یکنواخت)
-  const CH_WEIGHTS = [0.282, 0.213, 0.239, 0.266];
+  const CH_WEIGHTS = [0.281, 0.213, 0.239, 0.267];
   const INTRO_END = 0.05;   // سهم هیروی ثابت (فریم تایتل)
   const CH_FADE = 0;        // گذرهای این ریل وایپ موربِ درونِ سورس‌اند — فید سیاه اضافه لازم نیست
 
@@ -150,8 +152,8 @@
   const frames = new Array(FRAME_COUNT).fill(null);
   const decodeSet = new WeakSet(); // باید قبل از اولین استفاده تعریف شود (idleDecodeStep / prefetchAround)
   let loaded = 0;
-  // ?v=2: پس از پاک‌کردن کپشن‌های سورس، کش مرورگر فریم‌های کهنه را نمی‌سپارد
-  const path = (i) => `${FRAME_DIR}f_${String(i + 1).padStart(4, "0")}.webp?v=2`;
+  // ?v=3: فریم‌ها با ۳۰فریم‌برثانیه و نام‌های هم‌پوشان بازتولید شدند — کش مرورگر کهنه را نمی‌سپارد
+  const path = (i) => `${FRAME_DIR}f_${String(i + 1).padStart(4, "0")}.webp?v=3`;
 
   function updateLoader() {
     const p = Math.round((loaded / FRAME_COUNT) * 100);
@@ -182,7 +184,9 @@
 
   async function preload() {
     const firstJobs = [];
-    for (let i = 0; i <= HERO_LAST; i++) firstJobs.push(loadOne(i));
+    // فقط قاب هیرو + چند فریم جلوتر — فریم‌های ۰ تا GRID_HOLD−۱ هرگز نمایش داده نمی‌شوند
+    // (تایم‌لاین زیر INTRO_END روی GRID_HOLD قفل است) و بارگیری‌شان فقط لودر را کند می‌کند
+    for (let i = GRID_HOLD; i <= HERO_LAST + 6; i++) firstJobs.push(loadOne(i));
     await Promise.all(firstJobs);
     hideLoader();
     drawFrame(GRID_HOLD);
@@ -195,7 +199,8 @@
 
   // گرم‌کردن تدریجی در بیکاری: چند فریم جلوترِ بازیکن را می‌خواند (نه به‌ترتیب خطی)،
   // پس هرگز پهنای باند را جلوی اسکرول کاربر نمی‌گیرد
-  let idleCursor = 0;
+  // شروع از GRID_HOLD: فریم‌های پیش از قاب هیرو در تایم‌لاین این ریل هرگز دیده نمی‌شوند
+  let idleCursor = GRID_HOLD;
   function idleDecodeStep() {
     let sent = 0;
     while (idleCursor < FRAME_COUNT && sent < 4) {
