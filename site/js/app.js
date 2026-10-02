@@ -3,39 +3,39 @@
   "use strict";
 
   // ---------- پیکربندی ----------
-  // کلیپ ۰۰۷: 720×1280 عمودی، ۲۴fps، ۲۴۱ فریم — پنج صحنه با گذرهای فید-سیاه درون‌خودِ کلیپ
-  // دسکتاپ frames5 = 1152×2048 q78 (مجموع ۲۲MB — برای لینک‌های کند؛ درگاه هیرو ۰٫۶MB)
-  // 0-16 فید-این تدریجی (بوکه) / 20-49 صحنهٔ ۱ / 50-97 صحنهٔ ۲ / 98-145 صحنهٔ ۳ / 146-185 صحنهٔ ۴ / 186-240 صحنهٔ ۵ (روشن‌ترین)
-  // مرزها از پروفایل روشنایی پیکسلی: فرورفتگی‌های mean در 50/98/146/187 = کات‌های نرم سورس
-  const FRAME_DIR = isMobileEarly() ? "frames5m/" : "frames5/";
+  // ریل NEW SEASON: 1080×1920 عمودی، 30fps، ۱۵ ثانیه (۴۵۰ فریم سورس → ۲۴۰ فریم @16fps)
+  // دسکتاپ frames6 = 1152×2048 q78 (۳۰MB) / موبایل frames6m = 720×1280 q75 (۱۷MB)
+  // 0-47 کارت تایتل NEW SEASON / 48-101 سامورایی موج روی BMW E46 / 102-142 آنیمه مجنتا روی E46
+  // 143-188 سوپرای GR با لوری مسابقه‌ای / 189-239 کارت پایانی WRAPMODE (لوگو + Pick your wrap)
+  // مرزها از scene-detect سورس (کات‌ها در ۲٫۹۷s / ۸٫۹۳s / ۱۱٫۸s) + بازبینی فریمی وایپ مورب
+  const FRAME_DIR = isMobileEarly() ? "frames6m/" : "frames6/";
   function isMobileEarly() {
     // موبایل = فریم‌های ۷۲۰×۱۲۸۰ (۴ برابر سبک‌تر برای GPU گوشی) — بقیه با DPR و کش دیکد
     return window.matchMedia("(max-width: 768px)").matches;
   }
-  const FRAME_COUNT = 241;
-  const GRID_HOLD = 16;     // فریم هیرو: پس از فید-این، اولین قابِ روشن و پایدار
+  const FRAME_COUNT = 240;
+  const GRID_HOLD = 16;     // فریم هیرو: قاب تایتل NEW SEASON (کارت از فریم ۰ کامل است)
 
   const CHAPTERS = [
-    { from: 18,  to: 50  }, // ۱
-    { from: 51,  to: 98  }, // ۲
-    { from: 99,  to: 146 }, // ۳
-    { from: 147, to: 187 }, // ۴
-    { from: 188, to: 240 }, // ۵
+    { from: 48,  to: 101 }, // سامورایی موج
+    { from: 102, to: 142 }, // آنیمه مجنتا
+    { from: 143, to: 188 }, // سوپرای GR
+    { from: 189, to: 239 }, // کارت پایانی (بدون کپشن — لوگوی خودش حرف می‌زند)
   ];
   // سهم اسکرول هر فصل = متناسب با طول فریمی صحنه در سورس (سرعت اسکرول یکنواخت)
-  const CH_WEIGHTS = [0.145, 0.216, 0.216, 0.186, 0.237];
-  const INTRO_END = 0.05;   // سهم هیروی ثابت (فریم بوکه)
-  const CH_FADE = 0;        // گذرهای این کلیپ در خودِ سورس دیمری‌اند — فید سیاه اضافه لازم نیست
+  const CH_WEIGHTS = [0.282, 0.213, 0.239, 0.266];
+  const INTRO_END = 0.05;   // سهم هیروی ثابت (فریم تایتل)
+  const CH_FADE = 0;        // گذرهای این ریل وایپ موربِ درونِ سورس‌اند — فید سیاه اضافه لازم نیست
 
   const WA_NUMBER = "989196828013"; // شماره واقعی سایت wrapmode.ir
 
   // ---------- ۵ طرح کالکشن (به ترتیب ریل جدید) ----------
   const DESIGNS = [
-    { en: "SAMURAI WAVE",  fa: "سامورایی موج",   descFa: "موج بزرگ قرمز و فیروزه‌ای با سوارِ سامورایی؛ حس اوکی‌یوی ژاپن.", descEn: "Great red-and-teal wave with a samurai rider — ukiyo-e energy.", price: 45000000, img: "img/design-1.webp" },
-    { en: "MAGENTA ANIME", fa: "آنیمه مجنتا",    descFa: "پرتره‌ی آنیمه‌ی مجنتا روی بدنه‌ی نقره‌ای؛ جسور، پرانرژی، دیده‌شدن.", descEn: "Magenta anime portrait over a silver body — bold and loud.", price: 42000000, img: "img/design-2.webp" },
-    { en: "HAPPY HORSE",   fa: "هپی هورس ۱.۱",   descFa: "کمدی‌بوک سفید/مشکی با جوکر و تاج‌ها؛ امضای این کالکشن.",        descEn: "White/black comic splatter with clown and crowns — the signature.", price: 38000000, img: "img/design-3.webp" },
-    { en: "NEON GRAFFITI", fa: "گرافیتی نئون",   descFa: "آرت گرافیتی چندرنگ روی بدنه‌ی قرمز، زیر نور نئون سبز.",        descEn: "Multicolour graffiti on red body under green neon light.", price: 32000000, img: "img/design-4.webp" },
-    { en: "SAKURA NIGHT",  fa: "ساکورا شب",      descFa: "چاپ ساکورا و آنیمه‌ی صورتی روی بدنه‌ی مشکی؛ مه و گل‌ریزان.",    descEn: "Sakura anime print on black body — mist and falling petals.", price: 28000000, img: "img/design-5.webp" },
+    { en: "SAMURAI WAVE",  fa: "سامورایی موج",   descFa: "موج بزرگ قرمز و فیروزه‌ای با سوارِ سامورایی؛ حس اوکی‌یوی ژاپن.", descEn: "Great red-and-teal wave with a samurai rider — ukiyo-e energy.", price: 70000000, img: "img/design-1.webp" },
+    { en: "MAGENTA ANIME", fa: "آنیمه مجنتا",    descFa: "پرتره‌ی آنیمه‌ی مجنتا روی بدنه‌ی نقره‌ای؛ جسور، پرانرژی، دیده‌شدن.", descEn: "Magenta anime portrait over a silver body — bold and loud.", price: 70000000, img: "img/design-2.webp" },
+    { en: "HAPPY HORSE",   fa: "هپی هورس ۱.۱",   descFa: "کمدی‌بوک سفید/مشکی با جوکر و تاج‌ها؛ امضای این کالکشن.",        descEn: "White/black comic splatter with clown and crowns — the signature.", price: 70000000, img: "img/design-3.webp" },
+    { en: "NEON GRAFFITI", fa: "گرافیتی نئون",   descFa: "آرت گرافیتی چندرنگ روی بدنه‌ی قرمز، زیر نور نئون سبز.",        descEn: "Multicolour graffiti on red body under green neon light.", price: 70000000, img: "img/design-4.webp" },
+    { en: "SAKURA NIGHT",  fa: "ساکورا شب",      descFa: "چاپ ساکورا و آنیمه‌ی صورتی روی بدنه‌ی مشکی؛ مه و گل‌ریزان.",    descEn: "Sakura anime print on black body — mist and falling petals.", price: 70000000, img: "img/design-5.webp" },
   ];
 
   // ---------- بیلینگوال ----------
@@ -55,7 +55,7 @@
       "col.sub": "قیمت تمام‌شده با چاپ و اجرای حرفه‌ای — انتخاب کنید و سفارش را در واتساپ نهایی کنید.",
       "stat1": "پروژه اجرا شده", "stat2": "سال سابقه تخصصی", "stat3": "فویل اورجینال",
       "cart.title": "سبد خرید", "cart.empty": "سبد خرید خالی است.", "cart.total": "جمع کل",
-      "cart.order": "ثبت سفارش در واتساپ",
+      "cart.order": "ادامه فرآیند خرید",
       "contact.title": "تماس با ورپ‌مود",
       "contact.body": "برای مشاوره، قیمت دقیق و رزرو نوبت از واتساپ در ارتباط باشید.",
       "contact.cta": "گفتگو در واتساپ", "contact.close": "بستن",
@@ -74,7 +74,7 @@
       "col.sub": "Final price including print and professional installation — pick one and order on WhatsApp.",
       "stat1": "Projects delivered", "stat2": "Years of craft", "stat3": "Original vinyl",
       "cart.title": "Your cart", "cart.empty": "Your cart is empty.", "cart.total": "Total",
-      "cart.order": "Checkout on WhatsApp",
+      "cart.order": "Continue checkout",
       "contact.title": "Contact Wrapmode",
       "contact.body": "Reach us on WhatsApp for consultation, exact pricing and booking.",
       "contact.cta": "Chat on WhatsApp", "contact.close": "Close",
@@ -87,9 +87,22 @@
   const faNum = (n) => n.toLocaleString(lang === "fa" ? "fa-IR" : "en-US");
 
   // ?nomotion — حالت تست: بدون lenis تا اسکرول برنامه‌ای دقیق باشد
-  const prefersReducedMotion =
+  // let است نه const: اگر کاربر وسط کار تنظیم سیستم را عوض کند، همین متغیر به‌روز می‌شود
+  let prefersReducedMotion =
     window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
     new URLSearchParams(location.search).has("nomotion");
+
+  // ---------- توکن‌های حرکت ----------
+  // یک ریتم واحد برای همه‌ی ریویل‌ها (motion-consistency) — نه یک مدت‌زمانِ دلبخواهی برای هر گذر
+  // ورودِ اسکرولی آرام است (اسکرول در دست کاربر است)، خروجِ کپشن کوتاه‌تر تا رابط «سنگین» نشود
+  const MOTION = {
+    revealY: 22,        // آفست کم → مثل «فید» خوانده می‌شود، نه اسلایدِ بلند
+    revealDur: 0.6,     // ۴۰۰–۶۰۰ms؛ کوتاه‌تر از آن، اسکرول را بی‌قرار نشان می‌دهد
+    revealEase: "power3.out", // ease-out برای ورود (slow-in/slow-out)
+    stagger: 0.045,     // ۴۵ms بین آیتم‌های یک ردیف (MD: ۳۰–۵۰ms)
+    rowStagger: 0.075,  // هر ردیفِ بعدی گرید کمی دیرتر
+    countDur: 1.6,      // شمارنده‌ها کوتاه‌تر از ۲s قبلی — خواندن زودتر کامل می‌شود
+  };
   const mobileMQ = window.matchMedia("(max-width: 768px)");
   const isMobile = () => mobileMQ.matches;
 
@@ -137,7 +150,8 @@
   const frames = new Array(FRAME_COUNT).fill(null);
   const decodeSet = new WeakSet(); // باید قبل از اولین استفاده تعریف شود (idleDecodeStep / prefetchAround)
   let loaded = 0;
-  const path = (i) => `${FRAME_DIR}f_${String(i + 1).padStart(4, "0")}.webp`;
+  // ?v=2: پس از پاک‌کردن کپشن‌های سورس، کش مرورگر فریم‌های کهنه را نمی‌سپارد
+  const path = (i) => `${FRAME_DIR}f_${String(i + 1).padStart(4, "0")}.webp?v=2`;
 
   function updateLoader() {
     const p = Math.round((loaded / FRAME_COUNT) * 100);
@@ -413,13 +427,14 @@
         const span = Math.max(d.leave - d.enter, 0.001);
         const p = Math.min(1, (x - d.enter) / span);
         // دریفت مویی با خم آرام — کپشن مثل تایتل‌کارت فیلم بدون شتاب خطی بالا می‌رود
-        const drift = ((0.5 - smooth01(p)) * 26).toFixed(1);
+        // reduced-motion: دریفت صفر — هیچ حرکت اسکرول‌محوری نمی‌ماند، فقط فید
+        const drift = prefersReducedMotion ? "0.0" : ((0.5 - smooth01(p)) * 26).toFixed(1);
         if (drift !== d._drift) {
           d._drift = drift;
           d.el.style.setProperty("--drift", `${drift}px`);
         }
       } else {
-        const rest = state === "before" ? "13px" : "-13px";
+        const rest = prefersReducedMotion ? "0px" : state === "before" ? "13px" : "-13px";
         if (d._drift !== rest) {
           d._drift = rest;
           d.el.style.setProperty("--drift", rest);
@@ -606,19 +621,30 @@
   }
 
   // ---------- شمارنده‌ها ----------
+  // settle خروجی: هم مسیر reduced-motion، هم تغییر زندهٔ تنظیم سیستم، هم سقوطِ GSAP
+  let settleCounters = () => {};
+
   function initCounters() {
     const stats = document.getElementById("stats");
     if (!stats || typeof IntersectionObserver === "undefined") return;
+    const numbers = [...stats.querySelectorAll(".stat-number")];
+    // حالت نهایی، بی‌هیچ شمردنِ انیمیشنی — داده باید بی‌واسطه خوانده شود
+    settleCounters = () => {
+      numbers.forEach((el) => {
+        el.textContent = faNum(parseFloat(el.dataset.value));
+        el.dataset.done = "1";
+      });
+    };
+    if (prefersReducedMotion || typeof gsap === "undefined") { settleCounters(); return; }
     const io = new IntersectionObserver((entries) => {
       entries.forEach((en) => {
         if (!en.isIntersecting) return;
         io.disconnect();
-        stats.querySelectorAll(".stat-number").forEach((el) => {
+        numbers.forEach((el) => {
           const target = parseFloat(el.dataset.value);
           const obj = { v: 0 };
-          if (typeof gsap === "undefined") { el.textContent = faNum(target); return; }
           gsap.to(obj, {
-            v: target, duration: 2, ease: "power1.out",
+            v: target, duration: MOTION.countDur, ease: "power1.out",
             onUpdate: () => { el.textContent = faNum(Math.round(obj.v)); },
             onComplete: () => { el.dataset.done = "1"; },
           });
@@ -630,34 +656,92 @@
 
   // ---------- ریویل اسکرولی کالکشن ----------
   let revealIO = null;
+  let revealTargets = [];
+  const REVEAL_SEL =
+    "#collection .col-head, #collection .stat, #cards .card";
+
+  // پرش بی‌واسطه به حالت نهایی — برای prefers-reduced-motion و تغییر زندهٔ تنظیم سیستم.
+  // هرگز معکوس نمی‌شود: محتوا یک‌بار که دیده شد، دوباره پنهان نمی‌شود.
+  function settleReveals() {
+    if (revealIO) { revealIO.disconnect(); revealIO = null; }
+    revealTargets.forEach((el) => {
+      el.dataset.revealed = "1";
+      if (typeof gsap !== "undefined") gsap.set(el, { clearProps: "opacity,transform" });
+      else { el.style.opacity = ""; el.style.transform = ""; }
+    });
+  }
+
+  // تأخیر ریویل را بر اساس جایگاه واقعی در گرید می‌چیند، نه i % 4.
+  // روی موبایل یک‌ستونه، i % 4 ترتیبِ خواندن را به هم می‌ریخت (کارت پنجم بدون تأخیر می‌آمد).
+  function assignRevealDelays() {
+    const setDelay = (el, d) => { el.dataset.revDelay = String(d); };
+    document.querySelectorAll("#collection .col-head").forEach((el) => setDelay(el, 0));
+    document.querySelectorAll("#collection .stat").forEach((el, i) => setDelay(el, i * MOTION.stagger));
+
+    const cardRows = []; // به ترتیب DOM = ترتیب ردیف‌ها
+    document.querySelectorAll("#cards .card").forEach((el) => {
+      // کوانتایز ۸px: کارت‌های هم‌ترازِ یک ردیف دقیقاً یک offsetTop می‌گیرند
+      const top = Math.round(el.offsetTop / 8) * 8;
+      let row = cardRows.find((r) => r.top === top);
+      if (!row) { row = { top, items: 0 }; cardRows.push(row); }
+      const delay = cardRows.indexOf(row) * MOTION.rowStagger + row.items * MOTION.stagger;
+      setDelay(el, Number(delay.toFixed(3))); // رشتهی کوتاه: 0.225 نه 0.22499999999999998
+      row.items++;
+    });
+  }
+
   function initReveals() {
-    if (prefersReducedMotion || typeof IntersectionObserver === "undefined") return;
-    if (typeof gsap === "undefined") return;
+    if (typeof IntersectionObserver === "undefined") return;
+    if (typeof gsap === "undefined") return; // بدون GSAP محتوا پیش‌فرض دیده می‌شود — هیچ‌وقت نامرئی نمی‌ماند
     if (revealIO) revealIO.disconnect();
+
+    revealTargets = [...document.querySelectorAll(REVEAL_SEL)];
+    // prefers-reduced-motion: نه پنهان‌سازیِ اولیه، نه گذر — محتوا همان‌جا ایستاده است
+    if (prefersReducedMotion) { settleReveals(); return; }
+
+    assignRevealDelays();
+
     revealIO = new IntersectionObserver((entries) => {
       entries.forEach((en) => {
-        if (!en.isIntersecting || en.target.dataset.revealed) return;
-        en.target.dataset.revealed = "1";
-        revealIO.unobserve(en.target);
-        gsap.to(en.target, {
+        const el = en.target;
+        if (!en.isIntersecting || el.dataset.revealed) return;
+        el.dataset.revealed = "1";
+        revealIO.unobserve(el);
+        gsap.to(el, {
           opacity: 1, y: 0,
-          duration: 0.7,
-          delay: (parseFloat(en.target.dataset.revIdx) || 0) * 0.09,
-          ease: "power3.out",
-          clearProps: "transform",
+          duration: MOTION.revealDur,
+          delay: parseFloat(el.dataset.revDelay) || 0,
+          ease: MOTION.revealEase,
+          clearProps: "transform", // کلاس hover کارت باید ترنسفورم خودش را داشته باشد
         });
       });
-    }, { threshold: 0.15, rootMargin: "0px 0px -8% 0px" });
-    const targets = [
-      ...document.querySelectorAll("#collection .col-head, #collection .stat"),
-      ...document.querySelectorAll("#cards .card"),
-    ];
-    targets.forEach((el, i) => {
+    }, { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }); // ۱۵٪ دیده‌شدن: انیمیشن قبل از رسیدنِ کامل تمام می‌شود
+
+    revealTargets.forEach((el) => {
       delete el.dataset.revealed;
-      gsap.set(el, { opacity: 0, y: 26 });
-      el.dataset.revIdx = String(el.classList.contains("card") ? i % 4 : 0);
+      gsap.set(el, { opacity: 0, y: MOTION.revealY });
       revealIO.observe(el);
     });
+  }
+
+  // ---------- تغییر زندهٔ تنظیم حرکت ----------
+  // اگر کاربر وسط جلسه reduced-motion را روشن کند، هر چیزی که در حرکت/پنهان است
+  // بی‌واسطه به حالت نهایی می‌پرد و اسکرول نرم خاموش می‌شود.
+  function initMotionPreference() {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => {
+      if (!mq.matches || prefersReducedMotion) return;
+      prefersReducedMotion = true;
+      if (lenis) { try { lenis.destroy(); } catch (e) {} lenis = null; }
+      settleReveals();
+      settleCounters();
+      capDrivers.forEach((d) => d.el.style.setProperty("--drift", "0px"));
+      if (typeof gsap !== "undefined" && typeof gsap.globalTimeline !== "undefined") {
+        gsap.globalTimeline.getChildren(true, true, true).forEach((tw) => tw.progress(1));
+      }
+    };
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+    else if (mq.addListener) mq.addListener(onChange);
   }
 
   // ---------- کالکشن ----------
@@ -778,16 +862,8 @@
       b.textContent = inCart ? t("_added") : t("_add");
     });
 
-    // پیام واتساپ همیشه فارسی می‌ماند (گیرنده‌ی فروشگاه)
-    const lines = cartState.filter((it) => DESIGNS[it.car]).map((it) => {
-      const d = DESIGNS[it.car];
-      return `• ${d.fa} × ${it.qty.toLocaleString("fa-IR")} — ${(d.price * it.qty).toLocaleString("fa-IR")} تومان`;
-    });
-    const totalFa = total.toLocaleString("fa-IR");
-    const msg = lines.length
-      ? `سلام، سفارش از سایت ورپ‌مود:\n${lines.join("\n")}\nجمع: ${totalFa} تومان`
-      : "سلام، می‌خواهم درباره رپ خودرو مشاوره بگیرم.";
-    if (cartOrderBtn) cartOrderBtn.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+    // دکمهٔ زرد سبد = ادامهٔ خرید در سایت اصلی (با اقلام همین سبد)، نه واتساپ
+    if (cartOrderBtn) cartOrderBtn.href = checkoutUrl();
   }
 
   function addToCart(btn, car) {
@@ -813,17 +889,30 @@
     setTimeout(() => { cartDrawer.hidden = true; }, 380);
   }
 
+  // لینک ادامهٔ خرید در سایت اصلی: دو سایت cross-origin‌اند و localStorage بینشان
+  // به اشتراک گذاشته نمی‌شود، پس اقلام از طریق پارامتر URL به سبد سایت اصلی می‌روند
+  // (آنجا مشخصات کاربر و مراحل پرداخت تکمیل می‌شود).
+  const CHECKOUT_BASE = "https://wrapmode.ir/cart/";
+  function checkoutUrl() {
+    const items = cartState
+      .filter((it) => DESIGNS[it.car])
+      .map((it) => `${DESIGNS[it.car].en}:${it.qty}`)
+      .join(",");
+    return items ? `${CHECKOUT_BASE}?items=${encodeURIComponent(items)}` : CHECKOUT_BASE;
+  }
+
   function initCart() {
-    // آیکون سبد هدر حالا سبدِ همین سایت را باز می‌کند (دیگر لینک wrapmode.ir نیست)
+    // آیکون سبد هدر و دکمهٔ زرد داخل سبد، هر دو کاربر را به سبد سایت اصلی می‌فرستند
     const openBtn = document.getElementById("cart-open-btn");
     const closeBtn = document.getElementById("cart-close-btn");
     const backdrop = document.getElementById("cart-backdrop");
-    if (openBtn) openBtn.addEventListener("click", openCart);
+    if (openBtn) {
+      openBtn.addEventListener("click", () => { window.location.href = checkoutUrl(); });
+    }
+    // دکمهٔ زرد داخل سبد لینک است (نه دکمه) تا وسط‌کلیک/بازکردن در تب نو هم کار کند؛
+    // href آن در renderCart با اقلام همین سبد همگام می‌شود.
     if (closeBtn) closeBtn.addEventListener("click", closeCart);
     if (backdrop) backdrop.addEventListener("click", closeCart);
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && cartDrawer && !cartDrawer.hidden) closeCart();
-    });
   }
 
   // ---------- تماس ----------
@@ -962,6 +1051,7 @@
 
     setupCaptions();
     initCounters();
+    initMotionPreference();
     startRenderLoop();
     initNavScroll();
     initCart();

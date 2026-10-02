@@ -302,11 +302,20 @@ body.scrubbing .grain { animation-play-state: paused; }
   padding: 0 6vw;
   visibility: hidden;
   opacity: 0;
-  transition: opacity 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* خروج سریع‌تر از ورود (MD: ~۶۰–۷۰٪): رفتن ۳۵۰ms، آمدن ۵۵۰ms.
+     visibility داخل گذر لیست شده تا موقع رفتن، کپشن تا پایانِ محو باقی بماند
+     و «کات» نکن — قبلاً چون visibility بلافاصله hidden می‌شد، فیدِ خروج دیده نمی‌شد */
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 0.35s;
+  /* کپشن صرفاً تزئینی است و در طولِ ۳۵۰msِ محوِ خروج نباید ضربه‌گیری کند */
+  pointer-events: none;
   will-change: transform, opacity;
   text-shadow: 0 2px 26px rgba(0, 0, 0, 0.85), 0 1px 6px rgba(0, 0, 0, 0.9);
 }
-.cap.is-in { visibility: visible; opacity: 1; }
+.cap.is-in {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), visibility 0s linear 0s;
+}
 /* اسکریم نرم پشت کپشن — حس تایتل‌کارت فیلم روی فریم‌های روشن */
 .cap::before {
   content: ""; position: absolute; inset: -36px -4vw;
@@ -319,19 +328,20 @@ body.scrubbing .grain { animation-play-state: paused; }
 .cap.is-in::before { opacity: 1; }
 .cap-kicker {
   display: inline-flex; align-items: center; gap: clamp(10px, 2vw, 18px);
-  font-size: clamp(1.45rem, 5.5vw, 2.6rem);
+  font-size: clamp(1.6rem, 6vw, 2.85rem);
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: var(--accent);
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
+  color: #eccf8f;             /* یک پله روشن‌تر از --accent — پرنگ‌تر روی بازتاب روشن کف */
+  -webkit-text-stroke: 0.6px #eccf8f; /* ضخیم‌شدن گلیف بدون فونت سنگین‌تر (کورمورانت سقف ۷۰۰ دارد) */
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.85);
   margin: 0;
 }
 /* خط‌های مویی طلایی دو طرف نام طرح — قاب تایتل‌کارت */
 .cap-kicker::before, .cap-kicker::after {
   content: ""; width: clamp(26px, 5vw, 52px); height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(201, 162, 94, 0.65));
+  background: linear-gradient(90deg, transparent, rgba(236, 207, 143, 0.9));
 }
-.cap-kicker::after { background: linear-gradient(90deg, rgba(201, 162, 94, 0.65), transparent); }
+.cap-kicker::after { background: linear-gradient(90deg, rgba(236, 207, 143, 0.9), transparent); }
 
 /* ---------- کالکشن ---------- */
 .collection {
@@ -562,6 +572,9 @@ body.scrubbing .grain { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
   .grain, .scroll-hint { animation: none; }
   .card, .card-media img, .card-add, .cap::before { transition: none; }
+  /* کپشن بی‌واسطه ظاهر/ناپدید می‌شود — هیچ حرکت اسکرول‌محوری نمی‌ماند، فقط حالت نهایی.
+     .cap.is-in هم لازم است چون specificity بالاتری از .cap دارد */
+  .cap, .cap.is-in { transition: opacity 0.01ms linear, visibility 0s linear 0s; }
 }
 
 /* ---------- fallback: بوم در دسترس نیست (no-webgl) ---------- */

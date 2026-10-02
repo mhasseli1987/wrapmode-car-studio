@@ -3,7 +3,7 @@ publish = "site"
 command = ""
 
 [[headers]]
-  for = "/frames5*/*"
+  for = "/frames6*/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
