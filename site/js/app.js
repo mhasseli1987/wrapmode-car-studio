@@ -170,12 +170,14 @@
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        frames[i] = img; requesting.delete(i); loaded++; updateLoader();
+        frames[i] = img; requesting.delete(i); loaded++;
+        // پس از پنهان‌شدن لودر، نوشتن DOM برای هر فریم بی‌معناست — فقط هزینه
+        if (!loaderHidden) updateLoader();
         // دیکد بلافاصله پس از دانلود — کشیدنِ فریمِ سرد هرگز وسط اسکرول تپق نمی‌زند
         if (img.decode) { decodeSet.add(img); img.decode().catch(() => {}); }
         resolve();
       };
-      img.onerror = () => { requesting.delete(i); loaded++; updateLoader(); resolve(); };
+      img.onerror = () => { requesting.delete(i); loaded++; if (!loaderHidden) updateLoader(); resolve(); };
       img.src = path(i);
     });
   }
@@ -198,20 +200,27 @@
   }
 
   // گرم‌کردن تدریجی در بیکاری: چند فریم جلوترِ بازیکن را می‌خواند (نه به‌ترتیب خطی)،
-  // پس هرگز پهنای باند را جلوی اسکرول کاربر نمی‌گیرد
+  // پس هرگز پهنای باند را جلوی اسکرول کاربر نمی‌گیرد.
+  // دوشاخه (rIC + تایمر ۲۸۰ms): حلقه‌ی requestIdleCallback وسط اسکرولِ پیوسته گرسنه
+  // می‌ماند؛ با لِین تایمر، کل ریل (~۲۷MB) در ~۲۰ ثانیه مسلح می‌شود و اسکرولِ سریعِ
+  // دقیقه‌ی اول دیگر به «فریمِ نارسیده» نمی‌خورد (همان فریز-و-پرشِ «گیر»).
   let idleCursor = GRID_HOLD;
+  let bgTimer = 0;
   function idleDecodeStep() {
     let sent = 0;
-    while (idleCursor < FRAME_COUNT && sent < 4) {
+    while (idleCursor < FRAME_COUNT && sent < 8) {
       const i = idleCursor++;
       if (!frames[i] && !requesting.has(i)) { loadOne(i); sent++; }
     }
-    if (idleCursor >= FRAME_COUNT) return;
+    if (idleCursor >= FRAME_COUNT) {
+      if (bgTimer) { clearInterval(bgTimer); bgTimer = 0; }
+      return;
+    }
     scheduleIdleDecode();
   }
   function scheduleIdleDecode() {
-    if ("requestIdleCallback" in window) requestIdleCallback(idleDecodeStep, { timeout: 400 });
-    else setTimeout(idleDecodeStep, 60);
+    if (!bgTimer) bgTimer = setInterval(idleDecodeStep, 280);
+    if ("requestIdleCallback" in window) requestIdleCallback(idleDecodeStep, { timeout: 250 });
   }
 
   function hideLoader() {
@@ -223,7 +232,9 @@
   // ---------- بوم ----------
   // ---------- کیفیت تطبیقی: فریم‌تایم بالا رفت → فقط DPR پایین می‌آید ----------
   // بلندِ بین‌فریمی هرگز خاموش نمی‌شود — خاموشی‌اش همان «پله‌پله» است
-  let dprCap = 1.5;
+  // سقف ۱٫۲۵ دسکتاپ: سورس ۱۱۵۲px است و بالاتر از ~۱٫۵× فقط رسترِ iGPU را سنگین می‌کند،
+  // تیزی اضافه نمی‌دهد (بافر ۲۹٪ کوچک‌تر = رستر و آپلود تکسچر هر فریم سبک‌تر)
+  let dprCap = isMobile() ? 1.5 : 1.25;
   let ftAvg = 16.7;
   let warm = 0;
 
@@ -244,8 +255,8 @@
     canvas.height = nextH;
     // بعد از تغییر ابعاد، تنظیمات کانتکست ریست می‌شوند
     ctx.imageSmoothingEnabled = true;
-    // موبایل: مقیاس ~۱:۱ است، «medium» غیرقابل‌تشخیص و محسوس ارزان‌تر
-    ctx.imageSmoothingQuality = isMobile() ? "medium" : "high";
+    // در حرکت، تفاوت high/medium با چشم دیده نمی‌شود؛ medium مسیر رستر ارزان‌تری دارد
+    ctx.imageSmoothingQuality = "medium";
   }
 
   function nearestLoaded(i) {
@@ -292,15 +303,17 @@
     return Math.min(1, a);
   }
 
-  // اسکراب خامه‌ای: بین دو فریم مجاور بلند می‌کنیم (24fps سورس → حرکت پیوسته 60fps)
-  function drawFrame(fi, zoom) {
+  // اسکراب خامه‌ای: در حرکتِ آهسته بین دو فریم مجاور بلند می‌کنیم (۳۰fps سورس → پیوسته)
+  // blend=false در حرکتِ تند: بلندِ بین‌فریمی آن‌جا دیده نمی‌شود و فقط دو آپلود تکسچرِ
+  // تازه در هر تیک می‌سازد — همان مالتی‌پلِ رسترِ iGPU و تپق‌های ~۳۳ms
+  function drawFrame(fi, zoom, blend) {
     if (!canvasW) resizeCanvas();
     const i0 = Math.max(0, Math.min(FRAME_COUNT - 1, Math.floor(fi)));
     const i1 = Math.min(FRAME_COUNT - 1, i0 + 1);
     const f = fi - i0;
     const img0 = frames[i0], img1 = frames[i1];
-    if (img0 && img1 && f > 0.004 && f < 0.996) {
-      // crossfade با smoothstep — گذر نرم بین فریم‌های ۲۴fps و حذف «پله»
+    if (blend && img0 && img1 && f > 0.004 && f < 0.996) {
+      // crossfade با smoothstep — گذر نرم بین فریم‌های مجاور و حذف «پله»
       drawOne(img0, zoom);
       const s = f * f * (3 - 2 * f);
       ctx.globalAlpha = s;
@@ -453,6 +466,8 @@
   // فقط وقتی مقدار واقعاً عوض شده DOM را دست بزن (نوشتن مکرر style باعث ری‌استایل می‌شود)
   let lastHeroFade = -1;
   let lastHeaderScrolled = false;
+  // NodeList یک‌بار در boot کش می‌شود — querySelectorAll در هر فریم، forced reflow می‌سازد
+  let heroBtns = [];
 
   function syncHero(x) {
     // محویِ کپی با خم smoothstep — قطعِ تیزِ خطی در ابتدای اسکرول حس «پرش» می‌دهد
@@ -464,7 +479,7 @@
       if (heroCopy) {
         heroCopy.style.opacity = str;
         heroCopy.style.pointerEvents = off ? "none" : "";
-        heroCopy.querySelectorAll(".btn").forEach((b) => { b.style.pointerEvents = off ? "none" : "auto"; });
+        heroBtns.forEach((b) => { b.style.pointerEvents = off ? "none" : "auto"; });
       }
       if (scrollHint) scrollHint.style.opacity = str;
     }
@@ -488,7 +503,8 @@
   function prefetchAround(idx) {
     if (Math.abs(idx - lastPrefetchIdx) < 4) return;
     lastPrefetchIdx = idx;
-    for (let k = -6; k <= 22; k++) {
+    // پنجره‌ی پهن: فلیکِ سریعِ انگشت/چرخ ماوس می‌تواند در یک ثانیه ~۴۰ فریم جلو بزند
+    for (let k = -8; k <= 36; k++) {
       const j = idx + k;
       if (j < 0 || j >= FRAME_COUNT) continue;
       const img = frames[j];
@@ -508,7 +524,8 @@
 
   function render() {
     const { idx } = timelineAt(smoothQ);
-    drawFrame(idx, ZOOM_OFF);
+    // بلندِ بین‌فریمی فقط در حرکتِ آهسته معنا دارد؛ در حرکتِ تند، کشیدنی تکی
+    drawFrame(idx, ZOOM_OFF, Math.abs(targetQ - smoothQ) < 0.0012);
 
     // پرده‌ی تیره‌ی هیرو: فریم گرید عقب می‌نشیند تا کپی بخواند؛ با شروع اسکرول کنار می‌رود
     const veil = 0.44 * Math.max(0, 1 - smoothQ / (INTRO_END * 0.85));
@@ -545,8 +562,12 @@
   let lastP = -1;
   let lastStepAt = 0;
   let lastTickAt = 0;
-  let curVel = 0;
+  let lastMoveAt = -9999;
   let lastScrubbing = false;
+  // بلورِ هدر فقط بعد از سکونِ کامل بوم برگردد — نه روی آستانه‌ی لرزانِ سرعت.
+  // قبلاً curVel حوالی آستانه فلیکر می‌کرد: هر toggle = تغییر لایه‌ی backdrop-filter
+  // = ری‌بلورِ تمام‌صفحه روی iGPU و همان تپق‌های محسوس در اسکرولِ آهسته.
+  const SCRUB_SETTLE_MS = 280;
 
   function startRenderLoop() {
     const hasGsap = typeof gsap !== "undefined" && gsap && gsap.ticker;
@@ -595,12 +616,9 @@
     const k = 9;
     const alpha = 1 - Math.exp(-dt * k);
 
-    // سرعت را برای «کشش» نرم ردیابی می‌کنیم (بدون جهش)
-    const vRaw = Math.abs(d);
-    curVel += (vRaw - curVel) * Math.min(1, dt * 12);
-
     const moving = Math.abs(d) > 0.00002;
     if (moving) {
+      lastMoveAt = timeMs;
       smoothQ += d * alpha;
       render();
     } else if (smoothQ !== targetQ) {
@@ -608,8 +626,8 @@
       render();
     }
 
-    // ---- کلاس scrubbing فقط هنگام حرکت واقعی ----
-    const scrubbing = curVel > 0.0004;
+    // ---- کلاس scrubbing با hysteresis: تا ۲۸۰ms پس از آخرین حرکت بماند ----
+    const scrubbing = (timeMs - lastMoveAt) < SCRUB_SETTLE_MS;
     if (scrubbing !== lastScrubbing) {
       lastScrubbing = scrubbing;
       document.body.classList.toggle("scrubbing", scrubbing);
@@ -1026,6 +1044,7 @@
 
   // ---------- راه‌اندازی ----------
   function boot() {
+    heroBtns = heroCopy ? [...heroCopy.querySelectorAll(".btn")] : [];
     applyLang();
     resizeCanvas();
     measureScroll();
